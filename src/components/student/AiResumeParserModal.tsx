@@ -77,9 +77,10 @@ export function AiResumeParserModal({ isOpen, onClose, onSuccess }: AiResumePars
     formData.append('resume', file);
 
     try {
-      // 1. Parse resume text and extract sections
+      // 1. Parse resume text and extract sections (giving 60s for AI to process)
       const parseRes = await api.post('/students/resume/parse-ai', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 60000,
       });
 
       if (!parseRes.data.success) {
@@ -89,7 +90,9 @@ export function AiResumeParserModal({ isOpen, onClose, onSuccess }: AiResumePars
       const parsedData = parseRes.data.data;
 
       // 2. Automatically save structured sections directly to database
-      const applyRes = await api.post('/students/resume/apply-parsed', parsedData);
+      const applyRes = await api.post('/students/resume/apply-parsed', parsedData, {
+        timeout: 30000,
+      });
 
       if (applyRes.data.success) {
         const savedProfile = applyRes.data.profile || applyRes.data.data;

@@ -123,6 +123,7 @@ export function EditStudentProfilePage() {
           formData.append('resume', resumeFile);
           await api.post('/students/me/resume', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
+            timeout: 60000,
           });
         }
 
