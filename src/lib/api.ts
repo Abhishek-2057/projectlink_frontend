@@ -1,8 +1,23 @@
 import axios from 'axios';
 import { toast } from 'sonner';
 
+/**
+ * Computes base API URL:
+ * - Uses VITE_API_URL from .env if provided (e.g. https://api.myproject.com or https://api.myproject.com/api)
+ * - Falls back to '/api' for local Vite dev proxy or same-domain proxy
+ */
+function getApiBaseUrl(): string {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (!envUrl) return '/api';
+  const clean = envUrl.trim().replace(/\/+$/, '');
+  if (clean === '/api' || clean.endsWith('/api')) {
+    return clean;
+  }
+  return `${clean}/api`;
+}
+
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },

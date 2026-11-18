@@ -16,6 +16,22 @@ interface ChatState {
   addMessage: (msg: IMessage) => void;
 }
 
+function getSocketBaseUrl(): string {
+  const socketUrl = import.meta.env.VITE_SOCKET_URL;
+  if (socketUrl) return socketUrl.trim().replace(/\/+$/, '');
+
+  const apiUrl = import.meta.env.VITE_API_URL;
+  if (apiUrl && apiUrl.startsWith('http')) {
+    try {
+      return new URL(apiUrl).origin;
+    } catch {
+      return apiUrl.replace(/\/api\/?$/, '');
+    }
+  }
+
+  return '/';
+}
+
 export const useChatStore = create<ChatState>((set, get) => ({
   conversations: [],
   activeConversation: null,
@@ -25,7 +41,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   initSocket: (userId: string) => {
     if (get().socket) return;
-    const s = io('/', {
+    const socketBase = getSocketBaseUrl();
+    const s = io(socketBase, {
       query: { userId },
       transports: ['websocket', 'polling'],
     });
