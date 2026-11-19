@@ -87,6 +87,7 @@ export interface IStudentProfile {
   careerObjective?: string;
   educationList?: IEducationItem[];
   workExperienceList?: IWorkExperienceItem[];
+  workExperience?: IWorkExperienceItem[];
   extraCurricular?: string[];
   trainingsCourses?: ITrainingCourseItem[];
   projectList?: IProjectItem[];

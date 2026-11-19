@@ -120,47 +120,220 @@ export function ExploreStudentsPage() {
   const [inviteMessage, setInviteMessage] = useState('');
   const [inviting, setInviting] = useState(false);
 
-  // Filter params
+  // Search input from URL
   const search = searchParams.get('search') || '';
-  const skill = searchParams.get('skill') || '';
-  const college = searchParams.get('college') || '';
-  const minCgpa = searchParams.get('minCgpa') || '';
   const page = Number(searchParams.get('page') || '1');
-
   const [searchInput, setSearchInput] = useState(search);
 
-  const skillsList = [
+  // 1. Minimum CGPA filter state (default 1.0 = All / No Minimum)
+  const [minCgpaValue, setMinCgpaValue] = useState<number>(() => {
+    const p = searchParams.get('minCgpa');
+    return p ? parseFloat(p) : 1.0;
+  });
+
+  // 2. Technical skills filter state (case-insensitive array)
+  const [selectedSkills, setSelectedSkills] = useState<string[]>(() => {
+    const raw = searchParams.get('skills') || searchParams.get('skill') || '';
+    return raw
+      ? raw
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+  });
+  const [skillInputText, setSkillInputText] = useState('');
+  const [showSkillDropdown, setShowSkillDropdown] = useState(false);
+
+  // 3. Internship experience filter state
+  const [hasInternshipChecked, setHasInternshipChecked] = useState<boolean>(() => {
+    const p = searchParams.get('internship');
+    return p === 'has' || p === 'true';
+  });
+  const [fresherChecked, setFresherChecked] = useState<boolean>(() => {
+    const p = searchParams.get('internship');
+    return p === 'fresher' || p === 'false';
+  });
+
+  // 4. Graduation year filter state
+  const [batch2026, setBatch2026] = useState<boolean>(() => {
+    const p = searchParams.get('graduationYears') || searchParams.get('graduationYear') || '';
+    return p.includes('2026');
+  });
+  const [batch2027, setBatch2027] = useState<boolean>(() => {
+    const p = searchParams.get('graduationYears') || searchParams.get('graduationYear') || '';
+    return p.includes('2027');
+  });
+
+  const popularSkillsList = [
     'React',
     'Node.js',
     'Python',
-    'Go',
-    'Kubernetes',
-    'PyTorch',
     'TypeScript',
+    'Java',
+    'C++',
+    'MongoDB',
+    'Tailwind CSS',
     'Docker',
-    'FastAPI',
-    'Three.js',
   ];
 
-  const updateParam = (key: string, value: string) => {
+  const allSuggestedSkills = [
+    'React',
+    'React.js',
+    'Node.js',
+    'Python',
+    'TypeScript',
+    'JavaScript',
+    'Java',
+    'C++',
+    'Go',
+    'MongoDB',
+    'MySQL',
+    'PostgreSQL',
+    'Tailwind CSS',
+    'Docker',
+    'Kubernetes',
+    'Express.js',
+    'FastAPI',
+    'Next.js',
+    'Django',
+    'Flask',
+    'AWS',
+    'REST APIs',
+    'Data Structures & Algorithms',
+    'Machine Learning',
+  ];
+
+  // Sync state to URL search parameters
+  const syncParamsToUrl = (
+    newCgpa: number,
+    newSkills: string[],
+    newHasIntern: boolean,
+    newFresher: boolean,
+    newB26: boolean,
+    newB27: boolean
+  ) => {
     const next = new URLSearchParams(searchParams);
-    if (!value || value === 'all') {
-      next.delete(key);
+
+    if (newCgpa > 1.0) {
+      next.set('minCgpa', newCgpa.toFixed(1));
     } else {
-      next.set(key, value);
+      next.delete('minCgpa');
     }
+
+    if (newSkills.length > 0) {
+      next.set('skills', newSkills.join(','));
+      next.delete('skill');
+    } else {
+      next.delete('skills');
+      next.delete('skill');
+    }
+
+    if (newHasIntern && !newFresher) {
+      next.set('internship', 'has');
+    } else if (newFresher && !newHasIntern) {
+      next.set('internship', 'fresher');
+    } else {
+      next.delete('internship');
+    }
+
+    const batches: number[] = [];
+    if (newB26) batches.push(2026);
+    if (newB27) batches.push(2027);
+    if (batches.length > 0) {
+      next.set('graduationYears', batches.join(','));
+      next.delete('graduationYear');
+    } else {
+      next.delete('graduationYears');
+      next.delete('graduationYear');
+    }
+
     next.set('page', '1');
     setSearchParams(next);
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateParam('search', searchInput);
+  const handleCgpaChange = (val: number) => {
+    setMinCgpaValue(val);
+    syncParamsToUrl(val, selectedSkills, hasInternshipChecked, fresherChecked, batch2026, batch2027);
   };
 
-  const clearFilters = () => {
+  const handleAddSkill = (skillToAdd: string) => {
+    const trimmed = skillToAdd.trim();
+    if (!trimmed) return;
+    const exists = selectedSkills.some((s) => s.toLowerCase() === trimmed.toLowerCase());
+    if (!exists) {
+      const updated = [...selectedSkills, trimmed];
+      setSelectedSkills(updated);
+      syncParamsToUrl(minCgpaValue, updated, hasInternshipChecked, fresherChecked, batch2026, batch2027);
+    }
+    setSkillInputText('');
+    setShowSkillDropdown(false);
+  };
+
+  const handleRemoveSkill = (skillToRemove: string) => {
+    const updated = selectedSkills.filter(
+      (s) => s.toLowerCase() !== skillToRemove.toLowerCase()
+    );
+    setSelectedSkills(updated);
+    syncParamsToUrl(minCgpaValue, updated, hasInternshipChecked, fresherChecked, batch2026, batch2027);
+  };
+
+  const handleTogglePopularSkill = (skillName: string) => {
+    const exists = selectedSkills.some((s) => s.toLowerCase() === skillName.toLowerCase());
+    const updated = exists
+      ? selectedSkills.filter((s) => s.toLowerCase() !== skillName.toLowerCase())
+      : [...selectedSkills, skillName];
+    setSelectedSkills(updated);
+    syncParamsToUrl(minCgpaValue, updated, hasInternshipChecked, fresherChecked, batch2026, batch2027);
+  };
+
+  const handleClearAllSkills = () => {
+    setSelectedSkills([]);
+    setSkillInputText('');
+    syncParamsToUrl(minCgpaValue, [], hasInternshipChecked, fresherChecked, batch2026, batch2027);
+  };
+
+  const handleToggleHasInternship = (checked: boolean) => {
+    setHasInternshipChecked(checked);
+    syncParamsToUrl(minCgpaValue, selectedSkills, checked, fresherChecked, batch2026, batch2027);
+  };
+
+  const handleToggleFresher = (checked: boolean) => {
+    setFresherChecked(checked);
+    syncParamsToUrl(minCgpaValue, selectedSkills, hasInternshipChecked, checked, batch2026, batch2027);
+  };
+
+  const handleToggleBatch2026 = (checked: boolean) => {
+    setBatch2026(checked);
+    syncParamsToUrl(minCgpaValue, selectedSkills, hasInternshipChecked, fresherChecked, checked, batch2027);
+  };
+
+  const handleToggleBatch2027 = (checked: boolean) => {
+    setBatch2027(checked);
+    syncParamsToUrl(minCgpaValue, selectedSkills, hasInternshipChecked, fresherChecked, batch2026, checked);
+  };
+
+  const handleResetAll = () => {
+    setMinCgpaValue(1.0);
+    setSelectedSkills([]);
+    setSkillInputText('');
+    setHasInternshipChecked(false);
+    setFresherChecked(false);
+    setBatch2026(false);
+    setBatch2027(false);
     setSearchInput('');
     setSearchParams({});
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const next = new URLSearchParams(searchParams);
+    if (searchInput.trim()) {
+      next.set('search', searchInput.trim());
+    } else {
+      next.delete('search');
+    }
+    next.set('page', '1');
+    setSearchParams(next);
   };
 
   const handleOpenInvite = async (student: IStudentProfile) => {
@@ -214,7 +387,7 @@ export function ExploreStudentsPage() {
       setLoading(true);
       try {
         const query = searchParams.toString();
-        const res = await api.get(`/students?${query}&limit=12`);
+        const res = await api.get(`/students?${query}&limit=24`);
         if (res.data.success) {
           setStudents(res.data.data);
           setTotal(res.data.pagination.total);
@@ -228,6 +401,71 @@ export function ExploreStudentsPage() {
     }
     fetchStudents();
   }, [searchParams]);
+
+  // Client-Side Robust Filtration with Case-Insensitive Matching
+  const filteredStudents = React.useMemo(() => {
+    return students.filter((student) => {
+      // 1. Minimum CGPA filter
+      // Rule: Default 1.0 (meaning All / No Minimum) ensures students with empty/null CGPA aren't hidden
+      if (minCgpaValue > 1.0) {
+        const val = parseFloat(String(student.cgpa));
+        if (isNaN(val) || val < minCgpaValue) {
+          return false;
+        }
+      }
+
+      // 2. Technical Skills Matching (Case-Insensitive)
+      // Rule: Normalize both selected filter skills and student's skills array using .toLowerCase().trim()
+      // Supports matching substring (e.g. react matches React.js)
+      if (selectedSkills.length > 0) {
+        const studentSkills = (student.skills || []).map((s) => s.toLowerCase().trim());
+        const matchesSkills = selectedSkills.every((filterSkill) => {
+          const normFilter = filterSkill.toLowerCase().trim();
+          return studentSkills.some(
+            (studentSkill) =>
+              studentSkill === normFilter || studentSkill.includes(normFilter)
+          );
+        });
+        if (!matchesSkills) return false;
+      }
+
+      // 3. Internship Experience Check
+      // Rule: Check Array.isArray(student.workExperience) && student.workExperience.length > 0
+      const exps =
+        (student as any).workExperience ||
+        student.workExperienceList ||
+        student.experience ||
+        [];
+      const hasExp = Array.isArray(exps) && exps.length > 0;
+
+      if (hasInternshipChecked && !fresherChecked) {
+        if (!hasExp) return false;
+      } else if (fresherChecked && !hasInternshipChecked) {
+        if (hasExp) return false;
+      }
+
+      // 4. Graduation Year Check
+      const selectedBatches: number[] = [];
+      if (batch2026) selectedBatches.push(2026);
+      if (batch2027) selectedBatches.push(2027);
+
+      if (selectedBatches.length > 0) {
+        if (!selectedBatches.includes(Number(student.graduationYear))) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [
+    students,
+    minCgpaValue,
+    selectedSkills,
+    hasInternshipChecked,
+    fresherChecked,
+    batch2026,
+    batch2027,
+  ]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -269,59 +507,235 @@ export function ExploreStudentsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
           {/* Filters Sidebar */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs space-y-6">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-6">
+            {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                <Filter className="h-3.5 w-3.5 text-emerald-600" /> Filter Students
+                <Filter className="h-4 w-4 text-emerald-600" /> Filter Students
               </span>
-              {(search || skill || minCgpa) && (
-                <button onClick={clearFilters} className="text-xs text-red-600 hover:underline flex items-center gap-0.5">
-                  <X className="h-3 w-3" /> Reset
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={handleResetAll}
+                className="text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors cursor-pointer"
+              >
+                Reset All
+              </button>
             </div>
 
-            {/* Technical Skills */}
+            {/* 1. MINIMUM CGPA */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-                Technical Skill
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {skillsList.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => updateParam('skill', skill === s ? '' : s)}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
-                      skill === s
-                        ? 'bg-emerald-600 text-white border-emerald-600 font-bold'
-                        : 'border-slate-200 text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  Minimum CGPA
+                </label>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  {minCgpaValue <= 1.0 ? '1.0+ (ALL)' : `${minCgpaValue.toFixed(1)}+`}
+                </span>
+              </div>
+
+              {/* Range slider */}
+              <div className="relative py-1">
+                <input
+                  type="range"
+                  min="1.0"
+                  max="10.0"
+                  step="0.1"
+                  value={minCgpaValue}
+                  onChange={(e) => handleCgpaChange(parseFloat(e.target.value))}
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600 focus:outline-none"
+                />
+              </div>
+
+              {/* Slider scale markers */}
+              <div className="flex justify-between text-[11px] text-slate-400 font-medium px-0.5 pt-1">
+                <span>1.0</span>
+                <span>3.0</span>
+                <span>5.0</span>
+                <span>7.5</span>
+                <span>10.0</span>
               </div>
             </div>
 
-            {/* Minimum CGPA */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-                Minimum CGPA
+            {/* 2. TECHNICAL SKILLS */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  Technical Skills
+                </label>
+                <button
+                  type="button"
+                  onClick={handleClearAllSkills}
+                  className={`text-xs font-bold transition-colors ${
+                    selectedSkills.length === 0
+                      ? 'text-slate-400 cursor-default'
+                      : 'text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer'
+                  }`}
+                >
+                  ALL
+                </button>
+              </div>
+
+              {/* Search / Tag input */}
+              <div className="relative">
+                <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-xl border border-slate-200 bg-white focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-emerald-500 transition-all">
+                  {selectedSkills.map((sk) => (
+                    <span
+                      key={sk}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 animate-in fade-in"
+                    >
+                      {sk}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSkill(sk)}
+                        className="hover:text-emerald-950 p-0.5 rounded-sm"
+                        title="Remove skill"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                  <input
+                    type="text"
+                    placeholder={
+                      selectedSkills.length === 0
+                        ? 'Type or select skills (e.g. react, node)...'
+                        : 'Add more...'
+                    }
+                    value={skillInputText}
+                    onChange={(e) => {
+                      setSkillInputText(e.target.value);
+                      setShowSkillDropdown(true);
+                    }}
+                    onFocus={() => setShowSkillDropdown(true)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ',') {
+                        e.preventDefault();
+                        handleAddSkill(skillInputText);
+                      }
+                    }}
+                    className="flex-1 min-w-[130px] text-xs text-slate-800 placeholder:text-slate-400 bg-transparent focus:outline-none"
+                  />
+                </div>
+
+                {/* Autocomplete dropdown */}
+                {showSkillDropdown && skillInputText.trim().length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 z-30 bg-white border border-slate-200 rounded-xl shadow-lg p-1 max-h-48 overflow-y-auto">
+                    {allSuggestedSkills
+                      .filter(
+                        (s) =>
+                          s.toLowerCase().includes(skillInputText.toLowerCase().trim()) &&
+                          !selectedSkills.some((x) => x.toLowerCase() === s.toLowerCase())
+                      )
+                      .slice(0, 6)
+                      .map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => handleAddSkill(s)}
+                          className="w-full text-left px-2.5 py-1.5 text-xs text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg flex items-center justify-between transition-colors cursor-pointer"
+                        >
+                          <span>{s}</span>
+                          <span className="text-[10px] text-slate-400 font-medium">+ Add</span>
+                        </button>
+                      ))}
+                    <button
+                      type="button"
+                      onClick={() => handleAddSkill(skillInputText)}
+                      className="w-full text-left px-2.5 py-1.5 text-xs text-emerald-700 font-bold hover:bg-emerald-50 rounded-lg border-t border-slate-100 mt-0.5 cursor-pointer"
+                    >
+                      Add "{skillInputText.trim()}"
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Popular Skills Chips */}
+              <div className="pt-1">
+                <div className="flex flex-wrap gap-1.5">
+                  {popularSkillsList.map((s) => {
+                    const isSelected = selectedSkills.some(
+                      (sk) => sk.toLowerCase().trim() === s.toLowerCase().trim()
+                    );
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => handleTogglePopularSkill(s)}
+                        className={`px-2 py-0.5 rounded-md text-[11px] font-medium border transition-colors cursor-pointer ${
+                          isSelected
+                            ? 'bg-emerald-600 text-white border-emerald-600 font-bold'
+                            : 'border-slate-200 text-slate-600 bg-slate-50 hover:bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* 3. INTERNSHIP EXPERIENCE */}
+            <div className="space-y-2.5">
+              <label className="block text-xs font-bold text-slate-900 uppercase tracking-wider">
+                Internship Experience
               </label>
-              <div className="grid grid-cols-3 gap-1.5 text-center">
-                {['', '8.0', '9.0'].map((val) => (
-                  <button
-                    key={val}
-                    onClick={() => updateParam('minCgpa', val)}
-                    className={`py-1.5 rounded-md text-xs font-medium border transition-colors ${
-                      minCgpa === val
-                        ? 'bg-emerald-600 text-white border-emerald-600 font-bold'
-                        : 'border-slate-200 text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    {val === '' ? 'Any' : `${val}+`}
-                  </button>
-                ))}
+              <div className="space-y-2">
+                <label className="flex items-center gap-2.5 cursor-pointer group select-none">
+                  <input
+                    type="checkbox"
+                    checked={hasInternshipChecked}
+                    onChange={(e) => handleToggleHasInternship(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer"
+                  />
+                  <span className="text-xs font-medium text-slate-700 group-hover:text-slate-900">
+                    Has Internship Experience
+                  </span>
+                </label>
+
+                <label className="flex items-center gap-2.5 cursor-pointer group select-none">
+                  <input
+                    type="checkbox"
+                    checked={fresherChecked}
+                    onChange={(e) => handleToggleFresher(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer"
+                  />
+                  <span className="text-xs font-medium text-slate-700 group-hover:text-slate-900">
+                    Fresher / No Internship Yet
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* 4. GRADUATION YEAR */}
+            <div className="space-y-2.5">
+              <label className="block text-xs font-bold text-slate-900 uppercase tracking-wider">
+                Graduation Year
+              </label>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2.5 cursor-pointer group select-none">
+                  <input
+                    type="checkbox"
+                    checked={batch2026}
+                    onChange={(e) => handleToggleBatch2026(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer"
+                  />
+                  <span className="text-xs font-medium text-slate-700 group-hover:text-slate-900">
+                    Batch of 2026
+                  </span>
+                </label>
+
+                <label className="flex items-center gap-2.5 cursor-pointer group select-none">
+                  <input
+                    type="checkbox"
+                    checked={batch2027}
+                    onChange={(e) => handleToggleBatch2027(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer"
+                  />
+                  <span className="text-xs font-medium text-slate-700 group-hover:text-slate-900">
+                    Batch of 2027
+                  </span>
+                </label>
               </div>
             </div>
           </div>
@@ -329,7 +743,7 @@ export function ExploreStudentsPage() {
           {/* Results Column */}
           <div className="lg:col-span-3 space-y-6">
             <div className="flex items-center justify-between text-xs text-slate-500 pb-2">
-              <span>Showing <strong className="text-slate-900">{students.length}</strong> candidates</span>
+              <span>Showing <strong className="text-slate-900">{filteredStudents.length}</strong> candidates</span>
             </div>
 
             {/* Loading */}
@@ -347,20 +761,20 @@ export function ExploreStudentsPage() {
             )}
 
             {/* Empty State */}
-            {!loading && students.length === 0 && (
+            {!loading && filteredStudents.length === 0 && (
               <EmptyState
                 icon={GraduationCap}
                 title="No students found"
                 description="Try adjusting your filters or search terms."
-                actionText="Reset Filters"
-                onAction={clearFilters}
+                actionText="Reset All Filters"
+                onAction={handleResetAll}
               />
             )}
 
             {/* Student Cards Grid */}
-            {!loading && students.length > 0 && (
+            {!loading && filteredStudents.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {students.map((student) => (
+                {filteredStudents.map((student) => (
                   <Card key={student._id} className="hover:border-emerald-300 transition-all flex flex-col justify-between">
                     <CardContent className="p-5 flex-1 flex flex-col justify-between">
                       <div>
