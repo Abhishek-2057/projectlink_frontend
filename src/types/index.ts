@@ -63,6 +63,7 @@ export interface IPortfolioItem {
 export interface IStudentProfile {
   _id: string;
   userId: string;
+  studentIdNumber?: string;
   user?: IUser;
   college: string;
   degree: string;
@@ -197,6 +198,20 @@ export interface ITeam {
     skills?: string[];
     githubUrl?: string;
   }[];
+}
+
+export interface ITeamInvitation {
+  _id: string;
+  teamId: string;
+  team?: ITeam;
+  senderId: string;
+  sender?: IUser;
+  receiverId: string;
+  receiver?: IUser;
+  message?: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  sentAt: string;
+  respondedAt?: string;
 }
 
 export interface IProject {

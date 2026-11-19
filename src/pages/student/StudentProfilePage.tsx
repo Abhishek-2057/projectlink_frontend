@@ -33,6 +33,7 @@ import {
   FolderGit2,
   Sparkles,
   Globe,
+  Copy,
 } from 'lucide-react';
 
 function renderPointwise(text?: string) {
@@ -563,6 +564,23 @@ export function StudentProfilePage() {
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
                   {profile?.availability?.replace('_', ' ') || 'IMMEDIATE'}
                 </span>
+                {profile?.studentIdNumber && (
+                  <>
+                    <span>•</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(profile.studentIdNumber || '');
+                        toast.success(`Copied Student ID: ${profile.studentIdNumber}`);
+                      }}
+                      title="Click to copy your Student ID"
+                      className="cursor-pointer inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 border border-slate-300 transition-all"
+                    >
+                      ID: <strong className="text-emerald-700">{profile.studentIdNumber}</strong>
+                      <Copy className="h-2.5 w-2.5 text-slate-400" />
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>

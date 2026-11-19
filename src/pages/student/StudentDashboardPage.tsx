@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { AiResumeParserModal } from '../../components/student/AiResumeParserModal';
+import { toast } from 'sonner';
 import {
   Briefcase,
   Users,
@@ -21,6 +22,7 @@ import {
   Layers,
   ChevronRight,
   Upload,
+  Copy,
 } from 'lucide-react';
 
 export function StudentDashboardPage() {
@@ -112,9 +114,25 @@ export function StudentDashboardPage() {
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold mb-2">
             <Sparkles className="h-3.5 w-3.5 text-emerald-600" /> Final-Year Candidate Portal
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Welcome back, {user?.name}!
-          </h1>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Welcome back, {user?.name}!
+            </h1>
+            {studentProf?.studentIdNumber && (
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(studentProf.studentIdNumber || '');
+                  toast.success(`Copied Student ID: ${studentProf.studentIdNumber}`);
+                }}
+                title="Click to copy your unique Student ID to share with team leaders"
+                className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-emerald-50 text-slate-800 hover:text-emerald-800 border border-slate-200 text-xs font-mono font-bold transition-all shadow-2xs"
+              >
+                <span>ID: {studentProf.studentIdNumber}</span>
+                <Copy className="h-3 w-3 text-slate-400" />
+              </button>
+            )}
+          </div>
           <p className="text-sm text-slate-500 mt-1 max-w-xl">
             Track your team collaborations, applications to industry projects, and upcoming project milestones.
           </p>
