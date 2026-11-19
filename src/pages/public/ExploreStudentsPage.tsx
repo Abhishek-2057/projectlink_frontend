@@ -30,111 +30,6 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
-export const ALL_CATEGORIZED_SKILLS: string[] = [
-  // Tech & Data
-  'React.js',
-  'React',
-  'Node.js',
-  'Express.js',
-  'Python',
-  'MongoDB',
-  'PostgreSQL',
-  'HTML',
-  'Frontend Development',
-  'TypeScript',
-  'JavaScript',
-  'Tailwind CSS',
-  'Three.js',
-  'REST APIs',
-  'Docker',
-  'Kubernetes',
-  'C++',
-  'Java',
-  'Git',
-  'GitHub',
-  'Unreal Engine',
-  'Blender 3D',
-  'Autodesk Maya',
-  'Search Engine Optimization (SEO)',
-  'Google Analytics',
-  'Google Search Console',
-  'XML',
-  'Database Management System (DBMS)',
-  'ChatGPT',
-
-  // Marketing & Sales
-  'Social Media Marketing',
-  'Digital Marketing',
-  'Email Marketing',
-  'Content Marketing',
-  'LinkedIn Marketing',
-  'Instagram Marketing',
-  'Influencer Marketing',
-  'Lead Generation',
-  'Cold Calling',
-  'Business Development',
-  'Sales Strategy',
-  'Field Sales',
-  'Client Relationship Management (CRM)',
-  'Public Relations',
-
-  // Writing & Content
-  'Content Writing',
-  'Creative Writing',
-  'Script Writing',
-  'Copywriting/Blogging',
-  'Proofreading',
-  'Report Writing',
-  'Content Editing',
-  'Content Management',
-  'Storytelling',
-
-  // Design & Video
-  'Video Editing',
-  'Video Making',
-  'Adobe Premiere Pro',
-  'Final Cut Pro',
-  'Adobe Creative Suite',
-  'Animation',
-  'Graphic Design',
-  'UI & UX Design',
-
-  // Office & Business
-  'MS-Office',
-  'MS-Excel',
-  'MS-Word',
-  'Business Analysis',
-  'Business Research',
-  'Market Analysis',
-  'Financial Modeling',
-  'Accounting',
-  'Project Management',
-  'Research and Analytics',
-
-  // Soft Skills & Languages
-  'Effective Communication',
-  'English Proficiency (Spoken & Written)',
-  'Hindi Proficiency (Spoken)',
-  'Urdu Proficiency (Spoken & Written)',
-  'Negotiation',
-  'Counseling',
-  'Time Management',
-  'Problem Solving',
-  'Analytical Thinking',
-  'Presentation Skills',
-  'Interpersonal Skills',
-  'Public Speaking',
-  'Networking',
-  'Multitasking',
-  'Attention to Detail',
-  'Emotional Intelligence',
-
-  // Domain Specific
-  'Dietetics/Nutrition',
-  'Psychology',
-  'Social Work',
-];
-
 function getStudentHighlights(student: IStudentProfile): string[] {
   if (student.keyHighlights && student.keyHighlights.length > 0) {
     return student.keyHighlights;
@@ -282,14 +177,10 @@ export function ExploreStudentsPage() {
     fetchSkills();
   }, []);
 
-  // Master sorted list of all available skills from DB and categorized defaults
+  // Master sorted list of all available skills fetched dynamically from database API
   const availableSkillsList = useMemo(() => {
-    const set = new Set<string>();
-    ALL_CATEGORIZED_SKILLS.forEach((s) => set.add(s));
-    dbSkills.forEach((s) => {
-      if (s.name) set.add(s.name);
-    });
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
+    const list = dbSkills.map((s) => s.name).filter(Boolean);
+    return Array.from(new Set(list)).sort((a, b) => a.localeCompare(b));
   }, [dbSkills]);
 
   // Filter skills for dropdown matching user input, omitting already selected skills
