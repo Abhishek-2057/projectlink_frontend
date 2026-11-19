@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { IStudentProfile, IProject } from '../../types';
@@ -29,6 +29,111 @@ import {
   Sparkles,
   CheckCircle2,
 } from 'lucide-react';
+
+export const ALL_CATEGORIZED_SKILLS: string[] = [
+  // Tech & Data
+  'React.js',
+  'React',
+  'Node.js',
+  'Express.js',
+  'Python',
+  'MongoDB',
+  'PostgreSQL',
+  'HTML',
+  'Frontend Development',
+  'TypeScript',
+  'JavaScript',
+  'Tailwind CSS',
+  'Three.js',
+  'REST APIs',
+  'Docker',
+  'Kubernetes',
+  'C++',
+  'Java',
+  'Git',
+  'GitHub',
+  'Unreal Engine',
+  'Blender 3D',
+  'Autodesk Maya',
+  'Search Engine Optimization (SEO)',
+  'Google Analytics',
+  'Google Search Console',
+  'XML',
+  'Database Management System (DBMS)',
+  'ChatGPT',
+
+  // Marketing & Sales
+  'Social Media Marketing',
+  'Digital Marketing',
+  'Email Marketing',
+  'Content Marketing',
+  'LinkedIn Marketing',
+  'Instagram Marketing',
+  'Influencer Marketing',
+  'Lead Generation',
+  'Cold Calling',
+  'Business Development',
+  'Sales Strategy',
+  'Field Sales',
+  'Client Relationship Management (CRM)',
+  'Public Relations',
+
+  // Writing & Content
+  'Content Writing',
+  'Creative Writing',
+  'Script Writing',
+  'Copywriting/Blogging',
+  'Proofreading',
+  'Report Writing',
+  'Content Editing',
+  'Content Management',
+  'Storytelling',
+
+  // Design & Video
+  'Video Editing',
+  'Video Making',
+  'Adobe Premiere Pro',
+  'Final Cut Pro',
+  'Adobe Creative Suite',
+  'Animation',
+  'Graphic Design',
+  'UI & UX Design',
+
+  // Office & Business
+  'MS-Office',
+  'MS-Excel',
+  'MS-Word',
+  'Business Analysis',
+  'Business Research',
+  'Market Analysis',
+  'Financial Modeling',
+  'Accounting',
+  'Project Management',
+  'Research and Analytics',
+
+  // Soft Skills & Languages
+  'Effective Communication',
+  'English Proficiency (Spoken & Written)',
+  'Hindi Proficiency (Spoken)',
+  'Urdu Proficiency (Spoken & Written)',
+  'Negotiation',
+  'Counseling',
+  'Time Management',
+  'Problem Solving',
+  'Analytical Thinking',
+  'Presentation Skills',
+  'Interpersonal Skills',
+  'Public Speaking',
+  'Networking',
+  'Multitasking',
+  'Attention to Detail',
+  'Emotional Intelligence',
+
+  // Domain Specific
+  'Dietetics/Nutrition',
+  'Psychology',
+  'Social Work',
+];
 
 function getStudentHighlights(student: IStudentProfile): string[] {
   if (student.keyHighlights && student.keyHighlights.length > 0) {
@@ -143,6 +248,62 @@ export function ExploreStudentsPage() {
   });
   const [skillInputText, setSkillInputText] = useState('');
   const [showSkillDropdown, setShowSkillDropdown] = useState(false);
+  const skillDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Skills loaded from database
+  const [dbSkills, setDbSkills] = useState<{ _id?: string; name: string; category?: string }[]>([]);
+
+  // Close skill dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        skillDropdownRef.current &&
+        !skillDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowSkillDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Fetch categorized skills from backend API
+  useEffect(() => {
+    async function fetchSkills() {
+      try {
+        const res = await api.get('/skills');
+        if (res.data.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+          setDbSkills(res.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching skills from API:', err);
+      }
+    }
+    fetchSkills();
+  }, []);
+
+  // Master sorted list of all available skills from DB and categorized defaults
+  const availableSkillsList = useMemo(() => {
+    const set = new Set<string>();
+    ALL_CATEGORIZED_SKILLS.forEach((s) => set.add(s));
+    dbSkills.forEach((s) => {
+      if (s.name) set.add(s.name);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [dbSkills]);
+
+  // Filter skills for dropdown matching user input, omitting already selected skills
+  const filteredDropdownSkills = useMemo(() => {
+    const q = skillInputText.toLowerCase().trim();
+    return availableSkillsList.filter((s) => {
+      const isSelected = selectedSkills.some(
+        (sk) => sk.toLowerCase().trim() === s.toLowerCase().trim()
+      );
+      if (isSelected) return false;
+      if (!q) return true;
+      return s.toLowerCase().includes(q);
+    });
+  }, [availableSkillsList, skillInputText, selectedSkills]);
 
   // 3. Internship experience filter state
   const [hasInternshipChecked, setHasInternshipChecked] = useState<boolean>(() => {
@@ -163,45 +324,6 @@ export function ExploreStudentsPage() {
     const p = searchParams.get('graduationYears') || searchParams.get('graduationYear') || '';
     return p.includes('2027');
   });
-
-  const popularSkillsList = [
-    'React',
-    'Node.js',
-    'Python',
-    'TypeScript',
-    'Java',
-    'C++',
-    'MongoDB',
-    'Tailwind CSS',
-    'Docker',
-  ];
-
-  const allSuggestedSkills = [
-    'React',
-    'React.js',
-    'Node.js',
-    'Python',
-    'TypeScript',
-    'JavaScript',
-    'Java',
-    'C++',
-    'Go',
-    'MongoDB',
-    'MySQL',
-    'PostgreSQL',
-    'Tailwind CSS',
-    'Docker',
-    'Kubernetes',
-    'Express.js',
-    'FastAPI',
-    'Next.js',
-    'Django',
-    'Flask',
-    'AWS',
-    'REST APIs',
-    'Data Structures & Algorithms',
-    'Machine Learning',
-  ];
 
   // Sync state to URL search parameters
   const syncParamsToUrl = (
@@ -256,7 +378,7 @@ export function ExploreStudentsPage() {
     syncParamsToUrl(val, selectedSkills, hasInternshipChecked, fresherChecked, batch2026, batch2027);
   };
 
-  const handleAddSkill = (skillToAdd: string) => {
+  const handleAddSkill = async (skillToAdd: string) => {
     const trimmed = skillToAdd.trim();
     if (!trimmed) return;
     const exists = selectedSkills.some((s) => s.toLowerCase() === trimmed.toLowerCase());
@@ -264,24 +386,21 @@ export function ExploreStudentsPage() {
       const updated = [...selectedSkills, trimmed];
       setSelectedSkills(updated);
       syncParamsToUrl(minCgpaValue, updated, hasInternshipChecked, fresherChecked, batch2026, batch2027);
+
+      // Save new skill to database in background
+      try {
+        await api.post('/skills', { name: trimmed });
+      } catch {
+        // Silently continue
+      }
     }
     setSkillInputText('');
-    setShowSkillDropdown(false);
   };
 
   const handleRemoveSkill = (skillToRemove: string) => {
     const updated = selectedSkills.filter(
       (s) => s.toLowerCase() !== skillToRemove.toLowerCase()
     );
-    setSelectedSkills(updated);
-    syncParamsToUrl(minCgpaValue, updated, hasInternshipChecked, fresherChecked, batch2026, batch2027);
-  };
-
-  const handleTogglePopularSkill = (skillName: string) => {
-    const exists = selectedSkills.some((s) => s.toLowerCase() === skillName.toLowerCase());
-    const updated = exists
-      ? selectedSkills.filter((s) => s.toLowerCase() !== skillName.toLowerCase())
-      : [...selectedSkills, skillName];
     setSelectedSkills(updated);
     syncParamsToUrl(minCgpaValue, updated, hasInternshipChecked, fresherChecked, batch2026, batch2027);
   };
@@ -575,9 +694,16 @@ export function ExploreStudentsPage() {
                 </button>
               </div>
 
-              {/* Search / Tag input */}
-              <div className="relative">
-                <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-xl border border-slate-200 bg-white focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-emerald-500 transition-all">
+              {/* Search / Tag input & Dropdown Container */}
+              <div className="relative" ref={skillDropdownRef}>
+                <div
+                  onClick={() => setShowSkillDropdown(true)}
+                  className={`flex flex-wrap items-center gap-1.5 p-2 rounded-xl border bg-white transition-all cursor-text ${
+                    showSkillDropdown
+                      ? 'border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
                   {selectedSkills.map((sk) => (
                     <span
                       key={sk}
@@ -586,8 +712,11 @@ export function ExploreStudentsPage() {
                       {sk}
                       <button
                         type="button"
-                        onClick={() => handleRemoveSkill(sk)}
-                        className="hover:text-emerald-950 p-0.5 rounded-sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveSkill(sk);
+                        }}
+                        className="hover:text-emerald-950 p-0.5 rounded-sm cursor-pointer"
                         title="Remove skill"
                       >
                         <X className="h-3 w-3" />
@@ -610,68 +739,58 @@ export function ExploreStudentsPage() {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ',') {
                         e.preventDefault();
-                        handleAddSkill(skillInputText);
+                        if (skillInputText.trim()) {
+                          handleAddSkill(skillInputText);
+                        }
                       }
                     }}
                     className="flex-1 min-w-[130px] text-xs text-slate-800 placeholder:text-slate-400 bg-transparent focus:outline-none"
                   />
                 </div>
 
-                {/* Autocomplete dropdown */}
-                {showSkillDropdown && skillInputText.trim().length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 z-30 bg-white border border-slate-200 rounded-xl shadow-lg p-1 max-h-48 overflow-y-auto">
-                    {allSuggestedSkills
-                      .filter(
-                        (s) =>
-                          s.toLowerCase().includes(skillInputText.toLowerCase().trim()) &&
-                          !selectedSkills.some((x) => x.toLowerCase() === s.toLowerCase())
-                      )
-                      .slice(0, 6)
-                      .map((s) => (
+                {/* Dropdown list matching user screenshot */}
+                {showSkillDropdown && (
+                  <div className="absolute top-full left-0 right-0 mt-1 z-30 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                    <div className="max-h-60 overflow-y-auto divide-y divide-slate-100">
+                      {filteredDropdownSkills.map((skillName) => (
                         <button
-                          key={s}
+                          key={skillName}
                           type="button"
-                          onClick={() => handleAddSkill(s)}
-                          className="w-full text-left px-2.5 py-1.5 text-xs text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg flex items-center justify-between transition-colors cursor-pointer"
+                          onClick={() => handleAddSkill(skillName)}
+                          className="w-full text-left px-3.5 py-2.5 text-xs text-slate-800 hover:bg-emerald-50 hover:text-emerald-900 flex items-center justify-between transition-colors group cursor-pointer"
                         >
-                          <span>{s}</span>
-                          <span className="text-[10px] text-slate-400 font-medium">+ Add</span>
+                          <span className="font-medium text-slate-800 group-hover:text-emerald-900">
+                            {skillName}
+                          </span>
+                          <span className="text-xs font-semibold text-emerald-600 group-hover:text-emerald-700">
+                            + Add
+                          </span>
                         </button>
                       ))}
-                    <button
-                      type="button"
-                      onClick={() => handleAddSkill(skillInputText)}
-                      className="w-full text-left px-2.5 py-1.5 text-xs text-emerald-700 font-bold hover:bg-emerald-50 rounded-lg border-t border-slate-100 mt-0.5 cursor-pointer"
-                    >
-                      Add "{skillInputText.trim()}"
-                    </button>
+
+                      {filteredDropdownSkills.length === 0 && !skillInputText.trim() && (
+                        <div className="px-3.5 py-3 text-xs text-slate-400 text-center">
+                          All available skills selected
+                        </div>
+                      )}
+
+                      {/* Custom typed skill option */}
+                      {skillInputText.trim().length > 0 &&
+                        !availableSkillsList.some(
+                          (s) => s.toLowerCase() === skillInputText.toLowerCase().trim()
+                        ) && (
+                          <button
+                            type="button"
+                            onClick={() => handleAddSkill(skillInputText)}
+                            className="w-full text-left px-3.5 py-2.5 text-xs text-emerald-700 font-bold hover:bg-emerald-50 flex items-center justify-between border-t border-slate-100 cursor-pointer"
+                          >
+                            <span>Add custom "{skillInputText.trim()}"</span>
+                            <span className="text-xs font-bold text-emerald-700">+ Add</span>
+                          </button>
+                        )}
+                    </div>
                   </div>
                 )}
-              </div>
-
-              {/* Quick Popular Skills Chips */}
-              <div className="pt-1">
-                <div className="flex flex-wrap gap-1.5">
-                  {popularSkillsList.map((s) => {
-                    const isSelected = selectedSkills.some(
-                      (sk) => sk.toLowerCase().trim() === s.toLowerCase().trim()
-                    );
-                    return (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => handleTogglePopularSkill(s)}
-                        className={`px-2 py-0.5 rounded-md text-[11px] font-medium border transition-colors cursor-pointer ${
-                          isSelected
-                            ? 'bg-emerald-600 text-white border-emerald-600 font-bold'
-                            : 'border-slate-200 text-slate-600 bg-slate-50 hover:bg-white hover:border-slate-300'
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
             </div>
 
