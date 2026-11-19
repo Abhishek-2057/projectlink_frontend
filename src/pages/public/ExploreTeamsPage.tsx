@@ -53,6 +53,7 @@ export function ExploreTeamsPage() {
   const teamSize = searchParams.get('teamSize') || 'all';
 
   const [searchInput, setSearchInput] = useState(search);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const skillsList = [
     'Kubernetes',
@@ -162,6 +163,11 @@ export function ExploreTeamsPage() {
     fetchTeams();
   }, [searchParams]);
 
+  const activeFilterCount =
+    (search ? 1 : 0) +
+    (skill ? 1 : 0) +
+    (teamSize !== 'all' ? 1 : 0);
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar />
@@ -203,9 +209,39 @@ export function ExploreTeamsPage() {
 
       {/* Main Content Layout */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+        {/* Mobile Filter Toggle */}
+        <div className="lg:hidden mb-4 flex items-center justify-between bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
+          <button
+            type="button"
+            onClick={() => setMobileFiltersOpen((prev) => !prev)}
+            className="flex items-center gap-2 text-xs font-bold text-slate-800 cursor-pointer"
+          >
+            <Filter className="h-4 w-4 text-emerald-600" />
+            <span>{mobileFiltersOpen ? 'Hide Filters' : 'Filter Teams'}</span>
+            {activeFilterCount > 0 && (
+              <span className="bg-emerald-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+          {activeFilterCount > 0 && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-xs font-bold text-emerald-600 hover:text-emerald-700 cursor-pointer"
+            >
+              Reset All
+            </button>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
           {/* Filters Sidebar */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs space-y-6">
+          <div
+            className={`bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs space-y-6 ${
+              mobileFiltersOpen ? 'block' : 'hidden lg:block'
+            }`}
+          >
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                 <Filter className="h-3.5 w-3.5 text-emerald-600" /> Filter Teams
@@ -270,7 +306,7 @@ export function ExploreTeamsPage() {
 
             {/* Loading */}
             {loading && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div key={i} className="p-6 rounded-xl border border-slate-200 bg-white space-y-3">
                     <Skeleton className="h-12 w-12 rounded-full" />
@@ -294,7 +330,7 @@ export function ExploreTeamsPage() {
 
             {/* Team Cards Grid */}
             {!loading && teams.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {teams.map((team) => (
                   <Card key={team._id} className="hover:border-emerald-300 transition-all flex flex-col justify-between">
                     <CardContent className="p-5 flex-1 flex flex-col justify-between">

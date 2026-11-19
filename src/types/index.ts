@@ -353,10 +353,12 @@ export interface IProjectWorkspace {
 
 export interface IConversation {
   _id: string;
-  type: 'direct' | 'project';
+  type: 'direct' | 'project' | 'team';
   participants: string[];
   participantUsers?: IUser[];
   projectId?: string;
+  teamId?: string;
+  avatar?: string;
   title?: string;
   lastMessage?: {
     text: string;

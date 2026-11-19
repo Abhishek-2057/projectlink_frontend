@@ -522,11 +522,11 @@ export function StudentProfilePage() {
       {/* ------------------------------------------------------------- */}
       {/* TOP PROFILE HEADER CARD (IMAGE 0)                             */}
       {/* ------------------------------------------------------------- */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-6 sm:p-7">
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-5 sm:p-7">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
             {/* Avatar with photo change hover button */}
-            <div className="relative group shrink-0">
+            <div className="relative group shrink-0 self-start sm:self-auto">
               <Avatar
                 src={user?.avatar}
                 alt={studentName}
@@ -586,7 +586,7 @@ export function StudentProfilePage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
             <Button
               type="button"
               variant="outline"
@@ -1199,14 +1199,14 @@ export function StudentProfilePage() {
       {/* Header Modal */}
       {activeModal === 'header' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-left">
+          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-left flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">Edit Profile Header</h3>
               <button type="button" onClick={() => setActiveModal(null)} className="text-slate-400 hover:text-slate-600">
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleSaveHeader} className="p-6 space-y-4">
+            <form onSubmit={handleSaveHeader} className="p-6 space-y-4 overflow-y-auto">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Full Name</label>
                 <input
@@ -1297,14 +1297,14 @@ export function StudentProfilePage() {
       {/* Career Objective Modal */}
       {activeModal === 'career_objective' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-left">
+          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-left flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">Career Objective</h3>
               <button type="button" onClick={() => setActiveModal(null)} className="text-slate-400 hover:text-slate-600">
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleSaveCareerObjective} className="p-6 space-y-4">
+            <form onSubmit={handleSaveCareerObjective} className="p-6 space-y-4 overflow-y-auto">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Your Objective</label>
                 <textarea
@@ -1332,7 +1332,7 @@ export function StudentProfilePage() {
       {/* Education Modal */}
       {activeModal === 'education' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-left">
+          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-left flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">
                 {editingIndex !== null ? 'Edit Education' : 'Add Education'}
@@ -1341,7 +1341,7 @@ export function StudentProfilePage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleSaveEducation} className="p-6 space-y-3.5">
+            <form onSubmit={handleSaveEducation} className="p-6 space-y-3.5 overflow-y-auto">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Degree / Course</label>
                 <input
@@ -1402,7 +1402,7 @@ export function StudentProfilePage() {
       {/* Work Experience Modal */}
       {activeModal === 'work_experience' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-left">
+          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-left flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">
                 {editingIndex !== null ? 'Edit Experience' : 'Add Experience'}
@@ -1411,7 +1411,7 @@ export function StudentProfilePage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleSaveWorkExperience} className="p-6 space-y-3.5">
+            <form onSubmit={handleSaveWorkExperience} className="p-6 space-y-3.5 overflow-y-auto">
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-slate-700 mb-1">Designation / Role</label>
@@ -1485,7 +1485,7 @@ export function StudentProfilePage() {
       {/* Extra Curricular Modal */}
       {activeModal === 'extra_curricular' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-left">
+          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-left flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">
                 {editingIndex !== null ? 'Edit Activity' : 'Add Extra Curricular Activity'}
@@ -1494,7 +1494,7 @@ export function StudentProfilePage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleSaveExtraCurricular} className="p-6 space-y-4">
+            <form onSubmit={handleSaveExtraCurricular} className="p-6 space-y-4 overflow-y-auto">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Activity Description</label>
                 <textarea
@@ -1522,7 +1522,7 @@ export function StudentProfilePage() {
       {/* Training / Course Modal */}
       {activeModal === 'training_course' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-left">
+          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-left flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">
                 {editingIndex !== null ? 'Edit Training / Course' : 'Add Training / Course'}
@@ -1531,7 +1531,7 @@ export function StudentProfilePage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleSaveTraining} className="p-6 space-y-3.5">
+            <form onSubmit={handleSaveTraining} className="p-6 space-y-3.5 overflow-y-auto">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Course / Training Title</label>
                 <input
@@ -1591,7 +1591,7 @@ export function StudentProfilePage() {
       {/* Project Modal */}
       {activeModal === 'project' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-left">
+          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-left flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">
                 {editingIndex !== null ? 'Edit Project' : 'Add Academic / Personal Project'}
@@ -1600,7 +1600,7 @@ export function StudentProfilePage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleSaveProject} className="p-6 space-y-3.5">
+            <form onSubmit={handleSaveProject} className="p-6 space-y-3.5 overflow-y-auto">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Project Title</label>
                 <input
@@ -1658,7 +1658,7 @@ export function StudentProfilePage() {
       {/* Portfolio Modal */}
       {activeModal === 'portfolio' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-left">
+          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-left flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">
                 {editingIndex !== null ? 'Edit Portfolio Link' : 'Add Portfolio / Work Sample'}
@@ -1667,7 +1667,7 @@ export function StudentProfilePage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleSavePortfolio} className="p-6 space-y-3.5">
+            <form onSubmit={handleSavePortfolio} className="p-6 space-y-3.5 overflow-y-auto">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Platform / Work Sample Title</label>
                 <input
@@ -1706,7 +1706,7 @@ export function StudentProfilePage() {
       {/* Accomplishment Modal */}
       {activeModal === 'accomplishment' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-left">
+          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-left flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">
                 {editingIndex !== null ? 'Edit Accomplishment' : 'Add Accomplishment / Additional Detail'}
@@ -1715,7 +1715,7 @@ export function StudentProfilePage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleSaveAccomplishment} className="p-6 space-y-4">
+            <form onSubmit={handleSaveAccomplishment} className="p-6 space-y-4 overflow-y-auto">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Accomplishment Detail</label>
                 <textarea

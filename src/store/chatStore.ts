@@ -11,7 +11,7 @@ interface ChatState {
   socket: Socket | null;
   initSocket: (userId: string) => void;
   fetchConversations: () => Promise<void>;
-  setActiveConversation: (conv: IConversation) => Promise<void>;
+  setActiveConversation: (conv: IConversation | null) => Promise<void>;
   sendMessage: (text: string, file?: File) => Promise<void>;
   addMessage: (msg: IMessage) => void;
 }
@@ -40,13 +40,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
   socket: null,
 
   initSocket: (userId: string) => {
-    if (get().socket) return;
+    const existing = get().socket;
+    if (existing && existing.connected) return;
+
+    if (existing) {
+      existing.off('new_message');
+      existing.disconnect();
+    }
+
     const socketBase = getSocketBaseUrl();
     const s = io(socketBase, {
       query: { userId },
       transports: ['websocket', 'polling'],
     });
 
+    s.off('new_message');
     s.on('new_message', (msg: IMessage) => {
       const active = get().activeConversation;
       if (active && active._id === msg.conversationId) {
@@ -69,9 +77,24 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  setActiveConversation: async (conv: IConversation) => {
-    set({ activeConversation: conv, isLoading: true });
+  setActiveConversation: async (conv: IConversation | null) => {
+    const prevConv = get().activeConversation;
     const socket = get().socket;
+
+    if (!conv) {
+      if (socket && prevConv) {
+        socket.emit('leave_conversation', prevConv._id);
+      }
+      set({ activeConversation: null, messages: [], isLoading: false });
+      return;
+    }
+
+    // Leave previous room if changing conversation
+    if (socket && prevConv && prevConv._id !== conv._id) {
+      socket.emit('leave_conversation', prevConv._id);
+    }
+
+    set({ activeConversation: conv, isLoading: true });
     if (socket) {
       socket.emit('join_conversation', conv._id);
     }
@@ -79,7 +102,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       const res = await api.get(`/chat/conversations/${conv._id}/messages`);
       if (res.data.success) {
-        set({ messages: res.data.data, isLoading: false });
+        // Deduplicate messages by _id
+        const seen = new Set<string>();
+        const uniqueMessages: IMessage[] = [];
+        for (const m of res.data.data || []) {
+          if (m._id && !seen.has(m._id)) {
+            seen.add(m._id);
+            uniqueMessages.push(m);
+          }
+        }
+        set({ messages: uniqueMessages, isLoading: false });
       }
     } catch {
       set({ isLoading: false });
@@ -103,7 +135,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         res = await api.post(`/chat/conversations/${active._id}/messages`, { text });
       }
 
-      if (res.data.success) {
+      if (res.data.success && res.data.data) {
         get().addMessage(res.data.data);
       }
     } catch (err) {
@@ -112,8 +144,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   addMessage: (msg: IMessage) => {
-    set((state) => ({
-      messages: [...state.messages, msg],
-    }));
+    if (!msg || !msg._id) return;
+    set((state) => {
+      // Prevent duplicates: ignore if message _id is already in state
+      const exists = state.messages.some((m) => m._id === msg._id);
+      if (exists) return state;
+
+      return {
+        messages: [...state.messages, msg],
+      };
+    });
   },
 }));

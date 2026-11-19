@@ -263,10 +263,10 @@ export function ProjectWorkspacePage() {
           </div>
 
           {/* Sub Navigation Tabs */}
-          <div className="flex items-center gap-6 mt-6 pt-4 border-t border-slate-100 text-sm font-semibold">
+          <div className="flex items-center gap-4 sm:gap-6 mt-6 pt-4 border-t border-slate-100 text-sm font-semibold overflow-x-auto whitespace-nowrap pb-1">
             <button
               onClick={() => setActiveTab('tasks')}
-              className={`pb-2 border-b-2 transition-colors cursor-pointer ${
+              className={`pb-2 border-b-2 transition-colors cursor-pointer shrink-0 ${
                 activeTab === 'tasks'
                   ? 'border-emerald-600 text-slate-900'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -276,7 +276,7 @@ export function ProjectWorkspacePage() {
             </button>
             <button
               onClick={() => setActiveTab('milestones')}
-              className={`pb-2 border-b-2 transition-colors cursor-pointer ${
+              className={`pb-2 border-b-2 transition-colors cursor-pointer shrink-0 ${
                 activeTab === 'milestones'
                   ? 'border-emerald-600 text-slate-900'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -286,7 +286,7 @@ export function ProjectWorkspacePage() {
             </button>
             <button
               onClick={() => setActiveTab('deliverables')}
-              className={`pb-2 border-b-2 transition-colors cursor-pointer ${
+              className={`pb-2 border-b-2 transition-colors cursor-pointer shrink-0 ${
                 activeTab === 'deliverables'
                   ? 'border-emerald-600 text-slate-900'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -303,14 +303,14 @@ export function ProjectWorkspacePage() {
         {/* TAB 1: KANBAN TASKS */}
         {activeTab === 'tasks' && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <p className="text-xs text-slate-500">
                 Drag or update statuses as your student team develops features and executes sprints.
               </p>
               <Button
                 variant="default"
                 size="sm"
-                className="bg-slate-900 font-semibold"
+                className="bg-slate-900 font-semibold shrink-0"
                 onClick={() => setCreateTaskModalOpen(true)}
               >
                 <PlusCircle className="mr-1.5 h-3.5 w-3.5 text-emerald-400" /> Add Task
@@ -318,7 +318,7 @@ export function ProjectWorkspacePage() {
             </div>
 
             {/* Kanban Columns */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
               {taskColumns.map((col) => {
                 const colTasks = tasks.filter((t) => t.status === col.key);
                 return (

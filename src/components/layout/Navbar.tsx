@@ -230,13 +230,80 @@ export function Navbar() {
                 >
                   Open Dashboard
                 </Link>
+
+                {user.role === 'student' && (
+                  <div className="grid grid-cols-2 gap-2 text-xs font-semibold text-slate-700">
+                    <Link
+                      to="/student/profile"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-center py-2 px-3 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100"
+                    >
+                      My Profile
+                    </Link>
+                    <Link
+                      to="/student/teams"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-center py-2 px-3 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100"
+                    >
+                      My Teams
+                    </Link>
+                    <Link
+                      to="/student/invitations"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-center py-2 px-3 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100"
+                    >
+                      Invitations
+                    </Link>
+                    <Link
+                      to="/messages"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-center py-2 px-3 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100"
+                    >
+                      Messages
+                    </Link>
+                  </div>
+                )}
+
+                {user.role === 'company' && (
+                  <div className="grid grid-cols-2 gap-2 text-xs font-semibold text-slate-700">
+                    <Link
+                      to="/company/projects/new"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-center py-2 px-3 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100"
+                    >
+                      Post Project
+                    </Link>
+                    <Link
+                      to="/company/projects"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-center py-2 px-3 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100"
+                    >
+                      Manage Projects
+                    </Link>
+                    <Link
+                      to="/company/applications"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-center py-2 px-3 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100"
+                    >
+                      Applications
+                    </Link>
+                    <Link
+                      to="/messages"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-center py-2 px-3 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100"
+                    >
+                      Messages
+                    </Link>
+                  </div>
+                )}
+
                 <button
                   onClick={() => {
                     logout();
                     setMobileMenuOpen(false);
                     navigate('/');
                   }}
-                  className="w-full text-center py-2 px-4 rounded-lg border border-slate-200 text-slate-700 font-medium text-sm"
+                  className="w-full text-center py-2 px-4 rounded-lg border border-slate-200 text-slate-700 font-medium text-sm mt-1 cursor-pointer"
                 >
                   Sign Out
                 </button>

@@ -195,6 +195,7 @@ export function ExploreStudentsPage() {
   });
   const [skillInputText, setSkillInputText] = useState('');
   const [showSkillDropdown, setShowSkillDropdown] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const skillDropdownRef = useRef<HTMLDivElement>(null);
 
   // Skills loaded from database
@@ -525,6 +526,14 @@ export function ExploreStudentsPage() {
     batch2027,
   ]);
 
+  const activeFilterCount =
+    (minCgpaValue > 1.0 ? 1 : 0) +
+    selectedSkills.length +
+    (hasInternshipChecked ? 1 : 0) +
+    (fresherChecked ? 1 : 0) +
+    (batch2026 ? 1 : 0) +
+    (batch2027 ? 1 : 0);
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar />
@@ -563,9 +572,39 @@ export function ExploreStudentsPage() {
 
       {/* Main Content Layout */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+        {/* Mobile Filter Toggle */}
+        <div className="lg:hidden mb-4 flex items-center justify-between bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
+          <button
+            type="button"
+            onClick={() => setMobileFiltersOpen((prev) => !prev)}
+            className="flex items-center gap-2 text-xs font-bold text-slate-800 cursor-pointer"
+          >
+            <Filter className="h-4 w-4 text-emerald-600" />
+            <span>{mobileFiltersOpen ? 'Hide Filters' : 'Filter Candidates'}</span>
+            {activeFilterCount > 0 && (
+              <span className="bg-emerald-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+          {activeFilterCount > 0 && (
+            <button
+              type="button"
+              onClick={handleResetAll}
+              className="text-xs font-bold text-emerald-600 hover:text-emerald-700 cursor-pointer"
+            >
+              Reset All
+            </button>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
           {/* Filters Sidebar */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-6">
+          <div
+            className={`bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-6 ${
+              mobileFiltersOpen ? 'block' : 'hidden lg:block'
+            }`}
+          >
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
@@ -806,7 +845,7 @@ export function ExploreStudentsPage() {
 
             {/* Loading */}
             {loading && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div key={i} className="p-6 rounded-xl border border-slate-200 bg-white space-y-3">
                     <Skeleton className="h-12 w-12 rounded-full" />
@@ -831,7 +870,7 @@ export function ExploreStudentsPage() {
 
             {/* Student Cards Grid */}
             {!loading && filteredStudents.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {filteredStudents.map((student) => (
                   <Card key={student._id} className="hover:border-emerald-300 transition-all flex flex-col justify-between">
                     <CardContent className="p-5 flex-1 flex flex-col justify-between">
@@ -914,8 +953,8 @@ export function ExploreStudentsPage() {
           className="max-w-2xl sm:max-w-5xl p-0 overflow-hidden flex flex-col max-h-[86vh] shadow-2xl rounded-2xl border border-slate-200"
         >
           {/* 1. Fixed Header (Pinned at top - never scrolls away) */}
-          <div className="px-6 py-4.5 sm:py-5 border-b border-slate-100 bg-white shrink-0 pr-14">
-            <div className="flex items-center gap-3.5">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 bg-white shrink-0 pr-12 sm:pr-14">
+            <div className="flex items-center gap-3 sm:gap-3.5">
               <Avatar
                 src={selectedStudent.user?.avatar}
                 alt={selectedStudent.user?.name}
@@ -946,7 +985,7 @@ export function ExploreStudentsPage() {
           </div>
 
           {/* 2. Single Scrollable Body (Only 1 clean scrollbar, smooth scrolling) */}
-          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4 text-xs text-slate-700 overscroll-contain">
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 space-y-4 text-xs text-slate-700 overscroll-contain">
             {/* Key Highlights & Strengths (AI synthesized directly from Resume) */}
             {getStudentHighlights(selectedStudent).length > 0 && (
               <div className="p-4 bg-emerald-50/70 rounded-xl border border-emerald-200/90 shadow-2xs space-y-2.5">

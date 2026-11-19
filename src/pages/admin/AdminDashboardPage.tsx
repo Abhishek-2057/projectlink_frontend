@@ -147,7 +147,7 @@ export function AdminDashboardPage() {
       </div>
 
       {/* Tabs Control */}
-      <div className="flex items-center gap-3 border-b border-slate-200 pb-2 text-sm font-semibold">
+      <div className="flex items-center gap-3 border-b border-slate-200 pb-2 text-sm font-semibold overflow-x-auto whitespace-nowrap">
         <button
           onClick={() => setActiveTab('verifications')}
           className={`pb-2 border-b-2 transition-colors cursor-pointer ${

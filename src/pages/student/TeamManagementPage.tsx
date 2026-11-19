@@ -32,6 +32,7 @@ import {
   FolderGit2,
   AlertCircle,
   Loader2,
+  MessageSquare,
 } from 'lucide-react';
 
 export function TeamManagementPage() {
@@ -59,6 +60,16 @@ export function TeamManagementPage() {
 
   // View Profile Modal
   const [profileDetailModalOpen, setProfileDetailModalOpen] = useState(false);
+
+  // Leave Team Modal State
+  const [leaveModalOpen, setLeaveModalOpen] = useState(false);
+  const [teamToLeave, setTeamToLeave] = useState<any>(null);
+  const [leaving, setLeaving] = useState(false);
+
+  // Remove Member Modal State
+  const [removeModalOpen, setRemoveModalOpen] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<{ teamId: string; teamName: string; member: any } | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   const fetchTeams = async () => {
     try {
@@ -191,29 +202,44 @@ export function TeamManagementPage() {
     }
   };
 
-  const handleLeaveTeam = async (teamId: string) => {
-    if (!window.confirm('Are you sure you want to leave this team?')) return;
+  // Confirm Leave Team (via Modal)
+  const confirmLeaveTeam = async () => {
+    if (!teamToLeave) return;
+    setLeaving(true);
     try {
-      const res = await api.post(`/teams/${teamId}/leave`);
+      const res = await api.post(`/teams/${teamToLeave._id}/leave`);
       if (res.data.success) {
-        toast.success(res.data.message);
+        toast.success(res.data.message || `You left ${teamToLeave.name}`);
+        setLeaveModalOpen(false);
+        setTeamToLeave(null);
         fetchTeams();
       }
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Error leaving team');
+    } finally {
+      setLeaving(false);
     }
   };
 
-  const handleRemoveMember = async (teamId: string, memberId: string) => {
-    if (!window.confirm('Remove this member from the team?')) return;
+  // Confirm Remove Member (via Modal)
+  const confirmRemoveMember = async () => {
+    if (!memberToRemove) return;
+    const targetUserId = memberToRemove.member.userId || memberToRemove.member._id;
+    setRemoving(true);
     try {
-      const res = await api.delete(`/teams/${teamId}/members/${memberId}`);
+      const res = await api.delete(`/teams/${memberToRemove.teamId}/members/${targetUserId}`);
       if (res.data.success) {
-        toast.success('Member removed');
+        toast.success(
+          `${memberToRemove.member.name || memberToRemove.member.user?.name || 'Member'} removed from ${memberToRemove.teamName}`
+        );
+        setRemoveModalOpen(false);
+        setMemberToRemove(null);
         fetchTeams();
       }
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Error removing member');
+    } finally {
+      setRemoving(false);
     }
   };
 
@@ -291,7 +317,19 @@ export function TeamManagementPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  {/* Actions Row */}
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                    {/* Team Chat Button */}
+                    <Link to={`/messages?teamId=${team._id}`}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs font-bold text-emerald-700 hover:bg-emerald-50 border-emerald-300"
+                      >
+                        <MessageSquare className="mr-1.5 h-3.5 w-3.5 text-emerald-600" /> Team Chat
+                      </Button>
+                    </Link>
+
                     {isLeader && (
                       <Button
                         variant="emerald"
@@ -302,12 +340,16 @@ export function TeamManagementPage() {
                         <UserPlus className="mr-1.5 h-3.5 w-3.5" /> Invite Member
                       </Button>
                     )}
+
                     {!isLeader && (
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleLeaveTeam(team._id)}
-                        className="text-xs text-rose-600 hover:bg-rose-50"
+                        onClick={() => {
+                          setTeamToLeave(team);
+                          setLeaveModalOpen(true);
+                        }}
+                        className="text-xs text-rose-600 hover:bg-rose-50 border-rose-200"
                       >
                         <LogOut className="mr-1.5 h-3.5 w-3.5" /> Leave Team
                       </Button>
@@ -335,34 +377,48 @@ export function TeamManagementPage() {
                     Team Members ({team.members?.length || 0})
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {team.members?.map((m: any) => (
-                      <div
-                        key={m.userId || m._id}
-                        className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/80"
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <Avatar src={m.user?.avatar} alt={m.user?.name} size="sm" />
-                          <div className="min-w-0">
-                            <p className="text-xs font-bold text-slate-900 truncate">
-                              {m.user?.name || 'Member'}
-                            </p>
-                            <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
-                              {m.role || 'Member'}
-                            </p>
-                          </div>
-                        </div>
+                    {team.members?.map((m: any) => {
+                      const memberName = m.name || m.user?.name || 'Student Member';
+                      const memberAvatar = m.avatar || m.user?.avatar;
+                      const memberId = m.userId || m._id;
 
-                        {isLeader && m.userId !== user?._id && (
-                          <button
-                            onClick={() => handleRemoveMember(team._id, m.userId)}
-                            className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors"
-                            title="Remove member"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    ))}
+                      return (
+                        <div
+                          key={memberId}
+                          className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/80 hover:border-slate-300 transition-all"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <Avatar src={memberAvatar} alt={memberName} size="sm" />
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-slate-900 truncate">
+                                {memberName}
+                              </p>
+                              <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+                                {m.role || 'Member'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {isLeader && memberId !== user?._id && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMemberToRemove({
+                                  teamId: team._id,
+                                  teamName: team.name,
+                                  member: m,
+                                });
+                                setRemoveModalOpen(true);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
+                              title={`Remove ${memberName} from team`}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </Card>
@@ -370,6 +426,80 @@ export function TeamManagementPage() {
           })}
         </div>
       )}
+
+      {/* Leave Team Confirmation Modal */}
+      <Dialog open={leaveModalOpen} onOpenChange={setLeaveModalOpen}>
+        <DialogHeader>
+          <div className="flex items-center gap-2.5 text-rose-600">
+            <div className="p-2 rounded-full bg-rose-100">
+              <LogOut className="h-5 w-5" />
+            </div>
+            <DialogTitle>Leave Team</DialogTitle>
+          </div>
+          <DialogDescription className="pt-2 text-slate-600">
+            Are you sure you want to leave &quot;{teamToLeave?.name}&quot;? You will lose access to team group discussions and combined project applications.
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setLeaveModalOpen(false);
+              setTeamToLeave(null);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="default"
+            onClick={confirmLeaveTeam}
+            isLoading={leaving}
+            className="bg-rose-600 hover:bg-rose-700 text-white font-bold"
+          >
+            Leave Team
+          </Button>
+        </DialogFooter>
+      </Dialog>
+
+      {/* Remove Member Confirmation Modal */}
+      <Dialog open={removeModalOpen} onOpenChange={setRemoveModalOpen}>
+        <DialogHeader>
+          <div className="flex items-center gap-2.5 text-rose-600">
+            <div className="p-2 rounded-full bg-rose-100">
+              <Trash2 className="h-5 w-5" />
+            </div>
+            <DialogTitle>Remove Team Member</DialogTitle>
+          </div>
+          <DialogDescription className="pt-2 text-slate-600">
+            Are you sure you want to remove &quot;{memberToRemove?.member?.name || memberToRemove?.member?.user?.name || 'this member'}&quot; from &quot;{memberToRemove?.teamName}&quot;?
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setRemoveModalOpen(false);
+              setMemberToRemove(null);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="default"
+            onClick={confirmRemoveMember}
+            isLoading={removing}
+            className="bg-rose-600 hover:bg-rose-700 text-white font-bold"
+          >
+            Remove Member
+          </Button>
+        </DialogFooter>
+      </Dialog>
 
       {/* Create Team Modal */}
       <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
