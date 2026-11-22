@@ -76,7 +76,7 @@ export function HomePage() {
             <div className="lg:col-span-7 space-y-6 text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-semibold shadow-2xs">
                 <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
-                <span>The Dedicated Final-Year Project Collaboration Marketplace</span>
+                <span>The Dedicated Student Project Collaboration Marketplace</span>
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.12]">
@@ -139,7 +139,7 @@ export function HomePage() {
                       </div>
                       <div>
                         <h4 className="text-xs font-bold text-slate-900">Vortex Distributed Systems</h4>
-                        <p className="text-[11px] text-slate-500">4 Final-Year Developers • IIT BHU</p>
+                        <p className="text-[11px] text-slate-500">4 Student Developers • IIT BHU</p>
                       </div>
                     </div>
                     <Badge variant="emerald" className="text-[10px]">
@@ -188,7 +188,7 @@ export function HomePage() {
             </div>
             <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-800">
               <p className="text-3xl sm:text-4xl font-extrabold text-emerald-400 tracking-tight">100%</p>
-              <p className="text-xs sm:text-sm font-medium text-slate-400 mt-1">Final-Year Curriculum Focus</p>
+              <p className="text-xs sm:text-sm font-medium text-slate-400 mt-1">Real-World Project Focus</p>
             </div>
           </div>
         </div>
@@ -451,7 +451,7 @@ export function HomePage() {
             {/* For Students */}
             <div className="p-8 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-5">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold">
-                <GraduationCap className="h-4 w-4" /> For Final-Year Students
+                <GraduationCap className="h-4 w-4" /> For Students of All Years
               </div>
               <h3 className="text-2xl font-bold text-slate-900">
                 Transform academic thesis into production software
@@ -520,7 +520,7 @@ export function HomePage() {
             Ready to Build Meaningful Software?
           </h2>
           <p className="text-slate-400 text-base max-w-xl mx-auto leading-relaxed">
-            Join hundreds of final-year engineering students and tech companies already collaborating on ProjectLink.
+            Join hundreds of engineering students and tech companies already collaborating on ProjectLink.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
             <Link to="/register/student">

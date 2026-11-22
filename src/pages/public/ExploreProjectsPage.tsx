@@ -24,6 +24,7 @@ import {
   ArrowRight,
   Briefcase,
   X,
+  ChevronDown,
 } from 'lucide-react';
 
 export function ExploreProjectsPage() {
@@ -46,6 +47,12 @@ export function ExploreProjectsPage() {
 
   const [searchInput, setSearchInput] = useState(search);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [categoryQuery, setCategoryQuery] = useState(category === 'all' ? '' : category);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+
+  useEffect(() => {
+    setCategoryQuery(category === 'all' ? '' : category);
+  }, [category]);
 
   const categories = [
     'all',
@@ -156,7 +163,7 @@ export function ExploreProjectsPage() {
                 Explore Software Projects
               </h1>
               <p className="text-sm text-slate-500 mt-1">
-                Discover real final-year software requirements posted by verified technology companies.
+                Discover real software requirements posted by verified technology companies.
               </p>
             </div>
 
@@ -229,26 +236,110 @@ export function ExploreProjectsPage() {
               )}
             </div>
 
-            {/* Category Filter */}
-            <div>
+            {/* Category Filter - Searchable Input with Integrated Dropdown */}
+            <div className="relative">
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
                 Project Category
               </label>
-              <div className="space-y-1 max-h-48 overflow-y-auto">
-                {categories.map((c) => (
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Select or type category..."
+                  value={categoryQuery}
+                  onFocus={() => setCategoryOpen(true)}
+                  onChange={(e) => {
+                    setCategoryQuery(e.target.value);
+                    setCategoryOpen(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      updateParam('category', categoryQuery);
+                      setCategoryOpen(false);
+                    }
+                  }}
+                  className="w-full pl-3 pr-8 py-2 text-xs rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                />
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  {category !== 'all' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateParam('category', 'all');
+                        setCategoryQuery('');
+                      }}
+                      className="text-slate-400 hover:text-slate-600 p-0.5 rounded"
+                      title="Clear category"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                   <button
-                    key={c}
-                    onClick={() => updateParam('category', c)}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-md text-xs transition-colors ${
-                      category === c
-                        ? 'bg-emerald-50 text-emerald-800 font-bold'
-                        : 'text-slate-600 hover:bg-slate-50'
-                    }`}
+                    type="button"
+                    onClick={() => setCategoryOpen((prev) => !prev)}
+                    className="text-slate-400 hover:text-slate-600 p-0.5"
                   >
-                    {c === 'all' ? 'All Categories' : c}
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${categoryOpen ? 'rotate-180' : ''}`} />
                   </button>
-                ))}
+                </div>
               </div>
+
+              {/* Integrated Dropdown Menu */}
+              {categoryOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setCategoryOpen(false)}
+                  />
+                  <div className="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-20 max-h-52 overflow-y-auto py-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateParam('category', 'all');
+                        setCategoryQuery('');
+                        setCategoryOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-slate-50 flex items-center justify-between ${
+                        category === 'all' ? 'text-emerald-700 font-bold bg-emerald-50/60' : 'text-slate-700'
+                      }`}
+                    >
+                      <span>All Categories</span>
+                      {category === 'all' && <span className="text-[10px] text-emerald-600 font-bold">Active</span>}
+                    </button>
+                    {categories
+                      .filter((c) => c !== 'all')
+                      .filter((c) => !categoryQuery || c.toLowerCase().includes(categoryQuery.toLowerCase()))
+                      .map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => {
+                            updateParam('category', c);
+                            setCategoryQuery(c);
+                            setCategoryOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-slate-50 flex items-center justify-between ${
+                            category.toLowerCase() === c.toLowerCase()
+                              ? 'text-emerald-700 font-bold bg-emerald-50/60'
+                              : 'text-slate-700'
+                          }`}
+                        >
+                          <span>{c}</span>
+                          {category.toLowerCase() === c.toLowerCase() && (
+                            <span className="text-[10px] text-emerald-600 font-bold">Active</span>
+                          )}
+                        </button>
+                      ))}
+                    {categories
+                      .filter((c) => c !== 'all')
+                      .filter((c) => !categoryQuery || c.toLowerCase().includes(categoryQuery.toLowerCase())).length === 0 && (
+                      <div className="px-3 py-2 text-xs text-slate-400">
+                        Press Enter to filter by &quot;{categoryQuery}&quot;
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Compensation Type */}
@@ -304,6 +395,7 @@ export function ExploreProjectsPage() {
                 {['all', '2', '3', '4'].map((size) => (
                   <button
                     key={size}
+                    type="button"
                     onClick={() => updateParam('teamSize', size)}
                     className={`py-1.5 rounded-md text-xs font-medium border transition-colors ${
                       teamSize === size
@@ -314,6 +406,37 @@ export function ExploreProjectsPage() {
                     {size === 'all' ? 'All' : `${size}p`}
                   </button>
                 ))}
+              </div>
+
+              {/* Exact Team Size Input */}
+              <div className="mt-3 pt-2.5 border-t border-slate-100">
+                <label className="block text-[11px] font-medium text-slate-500 mb-1.5">
+                  Exact Team Size
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <div className="relative flex-1">
+                    <Users className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                    <input
+                      type="number"
+                      min="1"
+                      max="25"
+                      placeholder="e.g. 5"
+                      value={teamSize !== 'all' ? teamSize : ''}
+                      onChange={(e) => updateParam('teamSize', e.target.value)}
+                      className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                    />
+                  </div>
+                  {teamSize !== 'all' && (
+                    <button
+                      type="button"
+                      onClick={() => updateParam('teamSize', 'all')}
+                      className="text-xs text-slate-400 hover:text-slate-600 p-1.5 rounded hover:bg-slate-100"
+                      title="Clear team size"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>

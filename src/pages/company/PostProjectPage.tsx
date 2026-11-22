@@ -5,7 +5,17 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { toast } from 'sonner';
-import { PlusCircle, Sparkles, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import {
+  PlusCircle,
+  Sparkles,
+  ArrowLeft,
+  CheckCircle2,
+  FileUp,
+  BrainCircuit,
+  X,
+} from 'lucide-react';
+import { AiProjectParserModal } from '../../components/company/AiProjectParserModal';
+import { IParsedProjectBrief } from '../../types';
 
 export function PostProjectPage() {
   const navigate = useNavigate();
@@ -30,6 +40,29 @@ export function PostProjectPage() {
   const [compensationType, setCompensationType] = useState<'paid' | 'sponsored' | 'academic' | 'unpaid'>('paid');
   const [budgetOrStipend, setBudgetOrStipend] = useState('₹25,000 / month stipend + Certificate');
   const [submitting, setSubmitting] = useState(false);
+
+  // AI Document Auto-Fill state
+  const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [parsedSourceFile, setParsedSourceFile] = useState<string | null>(null);
+
+  const handleAiAutoFill = (data: IParsedProjectBrief, fileName: string) => {
+    if (data.title) setTitle(data.title);
+    if (data.category) setCategory(data.category);
+    if (data.shortDescription) setShortDescription(data.shortDescription);
+    if (data.problemStatement) setProblemStatement(data.problemStatement);
+    if (data.fullDescription) setFullDescription(data.fullDescription);
+    if (Array.isArray(data.goals) && data.goals.length > 0) setGoalsText(data.goals.join('\n'));
+    if (Array.isArray(data.deliverables) && data.deliverables.length > 0) setDeliverablesText(data.deliverables.join('\n'));
+    if (Array.isArray(data.requiredSkills) && data.requiredSkills.length > 0) setRequiredSkillsText(data.requiredSkills.join(', '));
+    if (Array.isArray(data.optionalSkills) && data.optionalSkills.length > 0) setOptionalSkillsText(data.optionalSkills.join(', '));
+    if (data.preferredTeamSize) setPreferredTeamSize(String(data.preferredTeamSize));
+    if (data.durationWeeks) setDurationWeeks(String(data.durationWeeks));
+    if (data.workMode) setWorkMode(data.workMode);
+    if (data.location) setLocation(data.location);
+    if (data.compensationType) setCompensationType(data.compensationType);
+    if (data.budgetOrStipend) setBudgetOrStipend(data.budgetOrStipend);
+    setParsedSourceFile(fileName);
+  };
 
   const handleSubmit = async (publishStatus: 'published' | 'draft') => {
     if (!title.trim() || !shortDescription.trim() || !requiredSkillsText.trim()) {
@@ -94,7 +127,7 @@ export function PostProjectPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 text-left">
-      <div className="flex items-center justify-between pb-4 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
           <button
             onClick={() => navigate('/company/projects')}
@@ -104,7 +137,65 @@ export function PostProjectPage() {
           </button>
           <h1 className="text-2xl font-bold text-slate-900">Post New Software Project</h1>
         </div>
+
+        <Button
+          type="button"
+          onClick={() => setAiModalOpen(true)}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md shrink-0 py-2 px-3.5 flex items-center gap-2"
+        >
+          <Sparkles className="h-4 w-4 text-emerald-200 animate-pulse" />
+          <span>Auto-Fill with AI</span>
+        </Button>
       </div>
+
+      {/* AI Auto-Fill Feature Banner */}
+      <div className="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 rounded-2xl p-6 text-white shadow-md relative overflow-hidden border border-emerald-500/20">
+        <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-emerald-500/10 blur-3xl pointer-events-none" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative z-10">
+          <div className="space-y-1.5 max-w-xl">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-400/30">
+              <BrainCircuit className="h-3.5 w-3.5 text-emerald-400" />
+              Gemini AI Document Parser
+            </div>
+            <h2 className="text-lg font-bold text-white tracking-tight">
+              Have a Project Specification Document or PRD?
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Upload your PDF, Word, or project brief. Gemini AI will analyze the requirements and automatically populate all the fields below. You can freely review and edit everything before publishing!
+            </p>
+          </div>
+
+          <Button
+            type="button"
+            onClick={() => setAiModalOpen(true)}
+            variant="default"
+            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold shadow-lg shrink-0 text-xs sm:text-sm py-2.5 px-4 cursor-pointer"
+          >
+            <FileUp className="mr-2 h-4 w-4 text-slate-950" />
+            Upload PDF / Document
+          </Button>
+        </div>
+      </div>
+
+      {/* AI Auto-Fill Confirmation Banner */}
+      {parsedSourceFile && (
+        <div className="flex items-center justify-between p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 animate-in fade-in duration-200">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+            <span>
+              Form successfully auto-filled from <strong>&quot;{parsedSourceFile}&quot;</strong> with Gemini AI. You can edit any field below before publishing.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setParsedSourceFile(null)}
+            className="text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-emerald-100/50 cursor-pointer"
+            title="Dismiss notice"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
 
       <div className="space-y-6">
         {/* Core Project Details */}
@@ -201,7 +292,7 @@ export function PostProjectPage() {
 
           <Textarea
             label="Final Deliverables (One per line)"
-            placeholder="Production Docker image and Helm chart&#10;Clean documented GitHub Repository&#10;Final Year Thesis Defense Deck"
+            placeholder="Production Docker image and Helm chart&#10;Clean documented GitHub Repository&#10;Project Documentation Deck"
             value={deliverablesText}
             onChange={(e) => setDeliverablesText(e.target.value)}
             rows={3}
@@ -309,6 +400,13 @@ export function PostProjectPage() {
           </Button>
         </div>
       </div>
+
+      {/* AI Document Auto-Fill Modal */}
+      <AiProjectParserModal
+        isOpen={aiModalOpen}
+        onClose={() => setAiModalOpen(false)}
+        onSuccess={handleAiAutoFill}
+      />
     </div>
   );
 }

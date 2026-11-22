@@ -230,7 +230,7 @@ export function EditStudentProfilePage() {
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             rows={3}
-            placeholder="Introduce your engineering interests and final-year aspirations..."
+            placeholder="Introduce your engineering interests and project aspirations..."
           />
         </div>
 

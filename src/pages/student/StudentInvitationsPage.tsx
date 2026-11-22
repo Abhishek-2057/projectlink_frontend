@@ -131,9 +131,16 @@ export function StudentInvitationsPage() {
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <h3 className="text-base font-bold text-slate-900">
-                            Join &quot;{inv.team?.name}&quot;
+                            {inv.invitationType === 'project_invite'
+                              ? `Project Collaboration: ${inv.projectTitle || 'Project Offer'}`
+                              : `Join "${inv.team?.name}"`}
                           </h3>
-                          <Badge variant="emerald" className="text-[10px]">Team Invitation</Badge>
+                          <Badge
+                            variant={inv.invitationType === 'project_invite' ? 'default' : 'emerald'}
+                            className="text-[10px]"
+                          >
+                            {inv.invitationType === 'project_invite' ? 'Project Offer' : 'Team Invitation'}
+                          </Badge>
                         </div>
                         <p className="text-xs text-slate-500">
                           Invited by <strong>{inv.sender?.name}</strong> • {formatDate(inv.sentAt)}
@@ -159,7 +166,7 @@ export function StudentInvitationsPage() {
                         onClick={() => handleRespond(inv._id, 'accept')}
                         className="text-xs font-semibold"
                       >
-                        <Check className="mr-1 h-3.5 w-3.5" /> Accept & Join
+                        <Check className="mr-1 h-3.5 w-3.5" /> {inv.invitationType === 'project_invite' ? 'Accept Offer' : 'Accept & Join'}
                       </Button>
                     </div>
                   </div>
@@ -208,7 +215,9 @@ export function StudentInvitationsPage() {
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <h3 className="text-base font-bold text-slate-900">
-                              {inv.team?.name || 'Project Team'}
+                              {inv.invitationType === 'project_invite'
+                                ? (inv.projectTitle ? `Project: ${inv.projectTitle}` : 'Project Offer')
+                                : (inv.team?.name || 'Project Team')}
                             </h3>
                             {isAccepted ? (
                               <Badge variant="emerald" className="inline-flex items-center gap-1 text-[11px] font-bold">
@@ -240,7 +249,7 @@ export function StudentInvitationsPage() {
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : 'bg-rose-50 text-rose-700 border border-rose-200'
                         }`}>
-                          {isAccepted ? 'Joined Team' : 'Declined'}
+                          {isAccepted ? (inv.invitationType === 'project_invite' ? 'Offer Accepted' : 'Joined Team') : 'Declined'}
                         </span>
                       </div>
                     </div>

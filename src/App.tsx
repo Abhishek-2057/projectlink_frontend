@@ -77,6 +77,28 @@ function ProtectedRoute({
   return <>{children}</>;
 }
 
+// Guest Route Guard (Prevents authenticated users from accessing Login / Register)
+function GuestRoute({ children }: { children: React.ReactNode }) {
+  const { user, token, isInitialized } = useAuthStore();
+
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 text-sm">
+        Authenticating session...
+      </div>
+    );
+  }
+
+  if (token && user) {
+    if (user.role === 'student') return <Navigate to="/student/dashboard" replace />;
+    if (user.role === 'company') return <Navigate to="/company/dashboard" replace />;
+    if (user.role === 'admin') return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 export function App() {
   const { initialize } = useAuthStore();
 
@@ -96,13 +118,13 @@ export function App() {
         <Route path="/teams" element={<ExploreTeamsPage />} />
         <Route path="/about" element={<AboutPage />} />
 
-        {/* Auth Routes */}
-        <Route path="/register" element={<RoleSelectionPage />} />
-        <Route path="/register/student" element={<StudentRegisterPage />} />
-        <Route path="/register/company" element={<CompanyRegisterPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        {/* Auth Routes (Guest Only - Redirect authenticated users) */}
+        <Route path="/register" element={<GuestRoute><RoleSelectionPage /></GuestRoute>} />
+        <Route path="/register/student" element={<GuestRoute><StudentRegisterPage /></GuestRoute>} />
+        <Route path="/register/company" element={<GuestRoute><CompanyRegisterPage /></GuestRoute>} />
+        <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
+        <Route path="/forgot-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
+        <Route path="/reset-password" element={<GuestRoute><ResetPasswordPage /></GuestRoute>} />
 
         {/* Student Portal Protected Routes */}
         <Route
@@ -113,6 +135,7 @@ export function App() {
             </ProtectedRoute>
           }
         >
+          <Route index element={<Navigate to="/student/dashboard" replace />} />
           <Route path="dashboard" element={<StudentDashboardPage />} />
           <Route path="profile" element={<StudentProfilePage />} />
           <Route path="profile/edit" element={<EditStudentProfilePage />} />
@@ -132,6 +155,7 @@ export function App() {
             </ProtectedRoute>
           }
         >
+          <Route index element={<Navigate to="/company/dashboard" replace />} />
           <Route path="dashboard" element={<CompanyDashboardPage />} />
           <Route path="profile" element={<CompanyProfilePage />} />
           <Route path="projects/new" element={<PostProjectPage />} />
@@ -168,6 +192,7 @@ export function App() {
             </ProtectedRoute>
           }
         >
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboardPage />} />
         </Route>
 

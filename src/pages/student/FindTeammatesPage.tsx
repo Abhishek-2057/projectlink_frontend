@@ -103,7 +103,7 @@ export function FindTeammatesPage() {
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Find Teammates</h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl">
-            Search fellow final-year engineering students with complementary skills to build your project dream team.
+            Search fellow engineering students with complementary skills to build your project dream team.
           </p>
         </div>
 
@@ -267,7 +267,7 @@ export function FindTeammatesPage() {
             <textarea
               value={inviteMessage}
               onChange={(e) => setInviteMessage(e.target.value)}
-              placeholder="Hey! We saw your profile and would love to have you join our team for our final-year project..."
+              placeholder="Hey! We saw your profile and would love to have you join our team for our software project..."
               className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               rows={3}
             />

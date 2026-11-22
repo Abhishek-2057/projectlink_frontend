@@ -25,6 +25,9 @@ import {
   ExternalLink,
   Github,
   Award,
+  ChevronDown,
+  ChevronUp,
+  Linkedin,
 } from 'lucide-react';
 
 export function CompanyApplicationsPage() {
@@ -36,6 +39,7 @@ export function CompanyApplicationsPage() {
 
   // Application detail modal
   const [detailApp, setDetailApp] = useState<any>(null);
+  const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null);
 
   // Assessment modal
   const [assessmentModalOpen, setAssessmentModalOpen] = useState(false);
@@ -120,7 +124,11 @@ export function CompanyApplicationsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'accepted':
-        return <Badge variant="emerald">ACCEPTED</Badge>;
+        return (
+          <Badge variant="emerald" className="bg-emerald-100 text-emerald-800 font-bold border-emerald-300">
+            ✓ ACCEPTED (COLLABORATION ACTIVE)
+          </Badge>
+        );
       case 'shortlisted':
         return <Badge variant="warning">SHORTLISTED</Badge>;
       case 'assessment_sent':
@@ -320,7 +328,7 @@ export function CompanyApplicationsPage() {
 
       {/* Detail Dossier Modal */}
       {detailApp && (
-        <Dialog open={!!detailApp} onOpenChange={() => setDetailApp(null)}>
+        <Dialog open={!!detailApp} onOpenChange={() => { setDetailApp(null); setExpandedMemberId(null); }}>
           <DialogHeader>
             <DialogTitle>
               {detailApp.applicantType === 'team'
@@ -332,46 +340,254 @@ export function CompanyApplicationsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 text-xs text-slate-700 max-h-[60vh] overflow-y-auto pr-1">
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="space-y-4 text-xs text-slate-700 max-h-[65vh] overflow-y-auto pr-1">
+            {/* Status notice if already accepted */}
+            {detailApp.status === 'accepted' && (
+              <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center justify-between text-emerald-900">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span className="font-semibold text-xs">
+                    Candidate Team Accepted • Active Project Collaboration
+                  </span>
+                </div>
+                <Link to={`/workspace/${detailApp.projectId}`}>
+                  <Button variant="emerald" size="sm" className="h-7 text-xs font-bold">
+                    Workspace <ArrowRight className="ml-1 h-3 w-3" />
+                  </Button>
+                </Link>
+              </div>
+            )}
+
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
               <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cover Letter & Proposal</p>
-              <p className="leading-relaxed whitespace-pre-line">{detailApp.coverLetter}</p>
+              <p className="leading-relaxed whitespace-pre-line text-slate-800">{detailApp.coverLetter}</p>
               {detailApp.proposal && (
                 <p className="mt-2 text-slate-800 font-medium">Architecture: {detailApp.proposal}</p>
               )}
             </div>
 
+            {/* Individual Candidate Profile */}
+            {detailApp.applicantType !== 'team' && detailApp.studentProfile && (
+              <div className="space-y-3 p-3.5 rounded-xl border border-slate-200 bg-white">
+                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Candidate Credentials</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">University</span>
+                    <span className="font-semibold text-slate-800 text-[11px]">{detailApp.studentProfile.college || detailApp.studentProfile.university || 'Campus'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Degree</span>
+                    <span className="font-semibold text-slate-800 text-[11px]">{detailApp.studentProfile.degree || 'Engineering'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Academic Score</span>
+                    <span className="font-bold text-emerald-700 text-[11px]">{detailApp.studentProfile.cgpa ? `${detailApp.studentProfile.cgpa} / 10.0 CGPA` : 'Good Standing'}</span>
+                  </div>
+                </div>
+
+                {detailApp.studentProfile.skills && detailApp.studentProfile.skills.length > 0 && (
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                      Technical Skills ({detailApp.studentProfile.skills.length})
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {detailApp.studentProfile.skills.map((sk: string) => (
+                        <span key={sk} className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-900 border border-emerald-200/70 text-[10px] font-medium">
+                          {sk}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Team Members List with Click-to-Expand Profile Details */}
             {detailApp.applicantType === 'team' && detailApp.teamDetails?.members && (
               <div>
-                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                  Team Members ({detailApp.teamDetails.members.length})
-                </p>
-                <div className="space-y-2">
-                  {detailApp.teamDetails.members.map((m: any) => (
-                    <div key={m._id || m.userId} className="p-2.5 rounded-lg border border-slate-200 flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <Avatar src={m.avatar || m.user?.avatar} alt={m.name || m.user?.name} size="sm" />
-                        <div>
-                          <h5 className="font-bold text-slate-900">{m.name || m.user?.name}</h5>
-                          <p className="text-[10px] text-slate-500">{m.role === 'leader' ? 'Team Lead' : 'Developer'}</p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    Team Members ({detailApp.teamDetails.members.length})
+                  </p>
+                  <span className="text-[11px] text-emerald-700 font-semibold">Click a member to view full profile</span>
+                </div>
+
+                <div className="space-y-2.5">
+                  {detailApp.teamDetails.members.map((m: any) => {
+                    const memberId = m._id || m.userId;
+                    const isExpanded = expandedMemberId === memberId;
+                    const profile = m.profile || {};
+                    const memberName = m.name || m.user?.name || 'Developer';
+                    const memberRole = m.role === 'leader' ? 'Team Lead' : 'Developer';
+                    const studentIdNum = profile.studentIdNumber || m.user?.studentIdNumber;
+                    const skills: string[] = profile.skills || [];
+
+                    return (
+                      <div
+                        key={memberId}
+                        className={`rounded-xl border transition-all overflow-hidden ${
+                          isExpanded
+                            ? 'border-emerald-400 bg-emerald-50/20 shadow-xs'
+                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'
+                        }`}
+                      >
+                        <div
+                          onClick={() => setExpandedMemberId(isExpanded ? null : memberId)}
+                          className="p-3 flex items-center justify-between cursor-pointer select-none"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Avatar src={m.avatar || m.user?.avatar} alt={memberName} size="sm" />
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h5 className="font-bold text-slate-900 text-xs sm:text-sm">{memberName}</h5>
+                                <span
+                                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                    m.role === 'leader'
+                                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                      : 'bg-slate-100 text-slate-700 border border-slate-200'
+                                  }`}
+                                >
+                                  {memberRole}
+                                </span>
+                                {studentIdNum && (
+                                  <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-mono font-semibold">
+                                    ID: {studentIdNum}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-500 mt-0.5">
+                                {profile.degree || 'B.Tech / Engineering'} • {profile.college || profile.university || 'Undergraduate'}
+                                {profile.cgpa && <span className="font-semibold text-slate-700"> • CGPA: {profile.cgpa}</span>}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-slate-400">
+                            <span className="text-[11px] font-medium text-emerald-700 hidden sm:inline">
+                              {isExpanded ? 'Hide Details' : 'View Full Profile'}
+                            </span>
+                            {isExpanded ? (
+                              <ChevronUp className="h-4 w-4 text-emerald-600" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </div>
                         </div>
+
+                        {/* Expanded Full Profile Details */}
+                        {isExpanded && (
+                          <div className="px-4 pb-4 pt-2 border-t border-slate-100 space-y-3 bg-white text-xs text-slate-700 animate-in fade-in duration-150">
+                            {/* Academic Credentials */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                              <div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Institute / College</span>
+                                <span className="font-semibold text-slate-800 text-[11px]">{profile.college || profile.university || 'Verified Campus'}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Degree / Major</span>
+                                <span className="font-semibold text-slate-800 text-[11px]">{profile.degree || 'Computer Science / Engineering'}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Academic Standing</span>
+                                <span className="font-bold text-emerald-700 text-[11px]">{profile.cgpa ? `${profile.cgpa} / 10.0 CGPA` : 'Good Standing'}</span>
+                              </div>
+                            </div>
+
+                            {/* Bio / Overview */}
+                            {profile.bio && (
+                              <div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Candidate Profile</span>
+                                <p className="leading-relaxed text-slate-600 text-[11px] bg-slate-50/50 p-2.5 rounded-lg border border-slate-100">{profile.bio}</p>
+                              </div>
+                            )}
+
+                            {/* Technical Skills */}
+                            {skills.length > 0 && (
+                              <div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                                  Technical Skills ({skills.length})
+                                </span>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {skills.map((sk: string) => (
+                                    <span
+                                      key={sk}
+                                      className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-900 border border-emerald-200/70 text-[10px] font-medium"
+                                    >
+                                      {sk}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Member Cover Letter & Statement */}
+                            <div>
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Proposal & Cover Letter</span>
+                              <p className="leading-relaxed text-slate-700 text-[11px] bg-slate-50/70 p-2.5 rounded-lg border border-slate-200/80">
+                                {profile.coverLetter || detailApp.coverLetter || 'Committed to project milestones and deliverables.'}
+                              </p>
+                            </div>
+
+                            {/* Links & Portfolio */}
+                            <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px]">
+                              {profile.githubUrl && (
+                                <a
+                                  href={profile.githubUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 font-semibold text-slate-700 hover:text-slate-900 hover:underline"
+                                >
+                                  <Github className="h-3.5 w-3.5" /> GitHub
+                                </a>
+                              )}
+                              {profile.linkedinUrl && (
+                                <a
+                                  href={profile.linkedinUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 font-semibold text-blue-700 hover:underline"
+                                >
+                                  <Linkedin className="h-3.5 w-3.5" /> LinkedIn
+                                </a>
+                              )}
+                              {profile.portfolioUrl && (
+                                <a
+                                  href={profile.portfolioUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 font-semibold text-emerald-700 hover:underline"
+                                >
+                                  <ExternalLink className="h-3.5 w-3.5" /> Portfolio
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
           </div>
 
           <DialogFooter>
-            <Button
-              variant="emerald"
-              size="sm"
-              onClick={() => handleUpdateStatus(detailApp._id, 'accepted')}
-            >
-              Accept Candidate Team
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setDetailApp(null)}>
+            {detailApp.status !== 'accepted' ? (
+              <Button
+                variant="emerald"
+                size="sm"
+                onClick={() => handleUpdateStatus(detailApp._id, 'accepted')}
+              >
+                Accept Candidate Team
+              </Button>
+            ) : (
+              <Link to={`/workspace/${detailApp.projectId}`}>
+                <Button variant="emerald" size="sm" className="font-bold">
+                  Open Project Workspace <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                </Button>
+              </Link>
+            )}
+            <Button variant="outline" size="sm" onClick={() => { setDetailApp(null); setExpandedMemberId(null); }}>
               Close
             </Button>
           </DialogFooter>

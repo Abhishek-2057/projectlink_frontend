@@ -41,6 +41,7 @@ export function ProjectDetailsPage() {
   const [similarProjects, setSimilarProjects] = useState<IProject[]>([]);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
+  const [userApplication, setUserApplication] = useState<any>(null);
 
   // Application Modal States
   const [applyIndividualModalOpen, setApplyIndividualModalOpen] = useState(false);
@@ -61,6 +62,7 @@ export function ProjectDetailsPage() {
           setProject(res.data.data);
           setIsBookmarked(res.data.data.isBookmarked || false);
           setHasApplied(res.data.data.hasApplied || false);
+          setUserApplication(res.data.data.userApplication || null);
           setSimilarProjects(res.data.data.similarProjects || []);
         }
       } catch (err: any) {
@@ -262,9 +264,14 @@ export function ProjectDetailsPage() {
                 <Bookmark className="h-5 w-5" />
               </button>
 
-              {hasApplied ? (
+              {userApplication?.status === 'accepted' ? (
                 <div className="px-4 py-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-sm font-bold flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                  Already Joined (Team Member)
+                </div>
+              ) : hasApplied ? (
+                <div className="px-4 py-2.5 bg-slate-100 border border-slate-200 text-slate-700 rounded-lg text-sm font-bold flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-slate-500" />
                   Application Submitted
                 </div>
               ) : (
@@ -430,7 +437,16 @@ export function ProjectDetailsPage() {
               </div>
 
               <div className="pt-4 border-t border-slate-100">
-                {hasApplied ? (
+                {userApplication?.status === 'accepted' ? (
+                  <Button
+                    variant="secondary"
+                    className="w-full font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 cursor-not-allowed flex items-center justify-center gap-2"
+                    disabled
+                  >
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <span>Already Joined</span>
+                  </Button>
+                ) : hasApplied ? (
                   <Button variant="secondary" className="w-full font-bold" disabled>
                     Application Submitted
                   </Button>
@@ -452,7 +468,7 @@ export function ProjectDetailsPage() {
                 About the Organization
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                {project.company?.description || 'Technology enterprise partner collaborating on final-year engineering projects.'}
+                {project.company?.description || 'Technology enterprise partner collaborating on student software engineering projects.'}
               </p>
               {project.company?.website && (
                 <a

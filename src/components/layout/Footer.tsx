@@ -18,7 +18,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
-              The premier marketplace connecting ambitious final-year college students and multi-disciplinary developer teams with companies building real-world software systems.
+              The premier marketplace connecting ambitious college students and multi-disciplinary developer teams with companies building real-world software systems.
             </p>
             <div className="flex items-center gap-3 text-slate-400 pt-2">
               <a href="https://github.com" target="_blank" rel="noreferrer" className="p-2 rounded-lg bg-slate-800 hover:text-white hover:bg-slate-700 transition-colors">

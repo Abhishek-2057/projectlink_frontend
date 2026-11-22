@@ -20,7 +20,7 @@ export function AboutPage() {
   const faqs = [
     {
       q: 'How is ProjectLink different from Internshala or job boards?',
-      a: 'Internshala focuses on internships and summer jobs. ProjectLink specifically focuses on final-year academic software development projects, capstones, and multi-developer student team collaborations with real companies.',
+      a: 'Internshala focuses on internships and summer jobs. ProjectLink specifically focuses on academic software development projects, capstones, and multi-developer student team collaborations with real companies.',
     },
     {
       q: 'Can students apply as a complete pre-formed team?',
@@ -49,7 +49,7 @@ export function AboutPage() {
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-            Turning Final-Year Degree Projects into Production Industry Systems
+            Turning Student Degree Projects into Production Industry Systems
           </h1>
 
           <p className="text-base sm:text-lg text-slate-600 leading-relaxed">

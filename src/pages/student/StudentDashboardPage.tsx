@@ -112,7 +112,7 @@ export function StudentDashboardPage() {
       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div>
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold mb-2">
-            <Sparkles className="h-3.5 w-3.5 text-emerald-600" /> Final-Year Candidate Portal
+            <Sparkles className="h-3.5 w-3.5 text-emerald-600" /> Student Candidate Portal
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">

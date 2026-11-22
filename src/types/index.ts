@@ -176,6 +176,7 @@ export interface ITeam {
   _id: string;
   name: string;
   description: string;
+  primaryDomain?: string;
   leaderId: string;
   leader?: IUser;
   college: string;
@@ -208,6 +209,9 @@ export interface ITeamInvitation {
   sender?: IUser;
   receiverId: string;
   receiver?: IUser;
+  projectId?: string;
+  projectTitle?: string;
+  invitationType?: 'team_join' | 'project_invite';
   message?: string;
   status: 'pending' | 'accepted' | 'rejected';
   sentAt: string;
@@ -245,6 +249,24 @@ export interface IProject {
   matchReasons?: string[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface IParsedProjectBrief {
+  title: string;
+  category: string;
+  shortDescription: string;
+  problemStatement: string;
+  fullDescription: string;
+  goals: string[];
+  deliverables: string[];
+  requiredSkills: string[];
+  optionalSkills: string[];
+  preferredTeamSize: number;
+  durationWeeks: number;
+  workMode: 'remote' | 'hybrid' | 'onsite';
+  location: string;
+  compensationType: 'paid' | 'sponsored' | 'academic' | 'unpaid';
+  budgetOrStipend: string;
 }
 
 export type ApplicationStatus =

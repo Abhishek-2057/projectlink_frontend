@@ -146,7 +146,7 @@ export function StudentRegisterPage() {
                   onChange={(e) => setGraduationYear(e.target.value)}
                   className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
-                  <option value="2026">2026 (Final Year)</option>
+                  <option value="2026">2026</option>
                   <option value="2027">2027 (Pre-Final)</option>
                   <option value="2025">2025 (Graduate)</option>
                 </select>

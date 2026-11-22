@@ -53,7 +53,7 @@ export function Navbar() {
             Project<span className="text-emerald-600">Link</span>
           </span>
           <span className="hidden sm:inline-block ml-1 text-[11px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
-            Final-Year Hub
+            Project Hub
           </span>
         </Link>
 

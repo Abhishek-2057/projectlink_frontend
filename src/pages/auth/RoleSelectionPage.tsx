@@ -17,7 +17,7 @@ export function RoleSelectionPage() {
             Join ProjectLink
           </h1>
           <p className="text-sm text-slate-500">
-            Select your account type to begin exploring verified final-year software collaborations.
+            Select your account type to begin exploring verified software collaborations.
           </p>
         </div>
 
@@ -30,7 +30,7 @@ export function RoleSelectionPage() {
               </div>
               <h2 className="text-2xl font-bold text-slate-900">Student Developer</h2>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Connect with tech companies, form multi-disciplinary final-year teams with classmates, and build real-world production projects with industry mentorship.
+                Connect with tech companies, form multi-disciplinary teams with classmates, and build real-world production projects with industry mentorship.
               </p>
               <ul className="space-y-2 pt-2 text-xs text-slate-600">
                 <li className="flex items-center gap-2">

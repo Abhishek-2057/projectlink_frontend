@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useLocation } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { IStudentProfile, IProject } from '../../types';
 import { Navbar } from '../../components/layout/Navbar';
@@ -154,6 +154,7 @@ function renderPointwise(text?: string) {
 
 export function ExploreStudentsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const { user } = useAuthStore();
 
   const [students, setStudents] = useState<IStudentProfile[]>([]);
@@ -259,24 +260,12 @@ export function ExploreStudentsPage() {
     return p === 'fresher' || p === 'false';
   });
 
-  // 4. Graduation year filter state
-  const [batch2026, setBatch2026] = useState<boolean>(() => {
-    const p = searchParams.get('graduationYears') || searchParams.get('graduationYear') || '';
-    return p.includes('2026');
-  });
-  const [batch2027, setBatch2027] = useState<boolean>(() => {
-    const p = searchParams.get('graduationYears') || searchParams.get('graduationYear') || '';
-    return p.includes('2027');
-  });
-
   // Sync state to URL search parameters
   const syncParamsToUrl = (
     newCgpa: number,
     newSkills: string[],
     newHasIntern: boolean,
-    newFresher: boolean,
-    newB26: boolean,
-    newB27: boolean
+    newFresher: boolean
   ) => {
     const next = new URLSearchParams(searchParams);
 
@@ -302,24 +291,13 @@ export function ExploreStudentsPage() {
       next.delete('internship');
     }
 
-    const batches: number[] = [];
-    if (newB26) batches.push(2026);
-    if (newB27) batches.push(2027);
-    if (batches.length > 0) {
-      next.set('graduationYears', batches.join(','));
-      next.delete('graduationYear');
-    } else {
-      next.delete('graduationYears');
-      next.delete('graduationYear');
-    }
-
     next.set('page', '1');
     setSearchParams(next);
   };
 
   const handleCgpaChange = (val: number) => {
     setMinCgpaValue(val);
-    syncParamsToUrl(val, selectedSkills, hasInternshipChecked, fresherChecked, batch2026, batch2027);
+    syncParamsToUrl(val, selectedSkills, hasInternshipChecked, fresherChecked);
   };
 
   const handleAddSkill = async (skillToAdd: string) => {
@@ -329,7 +307,7 @@ export function ExploreStudentsPage() {
     if (!exists) {
       const updated = [...selectedSkills, trimmed];
       setSelectedSkills(updated);
-      syncParamsToUrl(minCgpaValue, updated, hasInternshipChecked, fresherChecked, batch2026, batch2027);
+      syncParamsToUrl(minCgpaValue, updated, hasInternshipChecked, fresherChecked);
 
       // Save new skill to database in background
       try {
@@ -346,33 +324,23 @@ export function ExploreStudentsPage() {
       (s) => s.toLowerCase() !== skillToRemove.toLowerCase()
     );
     setSelectedSkills(updated);
-    syncParamsToUrl(minCgpaValue, updated, hasInternshipChecked, fresherChecked, batch2026, batch2027);
+    syncParamsToUrl(minCgpaValue, updated, hasInternshipChecked, fresherChecked);
   };
 
   const handleClearAllSkills = () => {
     setSelectedSkills([]);
     setSkillInputText('');
-    syncParamsToUrl(minCgpaValue, [], hasInternshipChecked, fresherChecked, batch2026, batch2027);
+    syncParamsToUrl(minCgpaValue, [], hasInternshipChecked, fresherChecked);
   };
 
   const handleToggleHasInternship = (checked: boolean) => {
     setHasInternshipChecked(checked);
-    syncParamsToUrl(minCgpaValue, selectedSkills, checked, fresherChecked, batch2026, batch2027);
+    syncParamsToUrl(minCgpaValue, selectedSkills, checked, fresherChecked);
   };
 
   const handleToggleFresher = (checked: boolean) => {
     setFresherChecked(checked);
-    syncParamsToUrl(minCgpaValue, selectedSkills, hasInternshipChecked, checked, batch2026, batch2027);
-  };
-
-  const handleToggleBatch2026 = (checked: boolean) => {
-    setBatch2026(checked);
-    syncParamsToUrl(minCgpaValue, selectedSkills, hasInternshipChecked, fresherChecked, checked, batch2027);
-  };
-
-  const handleToggleBatch2027 = (checked: boolean) => {
-    setBatch2027(checked);
-    syncParamsToUrl(minCgpaValue, selectedSkills, hasInternshipChecked, fresherChecked, batch2026, checked);
+    syncParamsToUrl(minCgpaValue, selectedSkills, hasInternshipChecked, checked);
   };
 
   const handleResetAll = () => {
@@ -381,8 +349,6 @@ export function ExploreStudentsPage() {
     setSkillInputText('');
     setHasInternshipChecked(false);
     setFresherChecked(false);
-    setBatch2026(false);
-    setBatch2027(false);
     setSearchInput('');
     setSearchParams({});
   };
@@ -503,17 +469,6 @@ export function ExploreStudentsPage() {
         if (hasExp) return false;
       }
 
-      // 4. Graduation Year Check
-      const selectedBatches: number[] = [];
-      if (batch2026) selectedBatches.push(2026);
-      if (batch2027) selectedBatches.push(2027);
-
-      if (selectedBatches.length > 0) {
-        if (!selectedBatches.includes(Number(student.graduationYear))) {
-          return false;
-        }
-      }
-
       return true;
     });
   }, [
@@ -522,21 +477,17 @@ export function ExploreStudentsPage() {
     selectedSkills,
     hasInternshipChecked,
     fresherChecked,
-    batch2026,
-    batch2027,
   ]);
 
   const activeFilterCount =
     (minCgpaValue > 1.0 ? 1 : 0) +
     selectedSkills.length +
     (hasInternshipChecked ? 1 : 0) +
-    (fresherChecked ? 1 : 0) +
-    (batch2026 ? 1 : 0) +
-    (batch2027 ? 1 : 0);
+    (fresherChecked ? 1 : 0);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <Navbar />
+      {!location.pathname.startsWith('/company') && <Navbar />}
 
       {/* Header Banner */}
       <div className="bg-white border-b border-slate-200/80 py-8">
@@ -544,10 +495,10 @@ export function ExploreStudentsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                Discover Final-Year Student Developers
+                Discover Student Developers
               </h1>
               <p className="text-sm text-slate-500 mt-1">
-                Explore pre-screened final-year engineering students by tech stack, academic standing, and GitHub repositories.
+                Explore pre-screened engineering students by tech stack, academic standing, and GitHub repositories.
               </p>
             </div>
 
@@ -799,38 +750,6 @@ export function ExploreStudentsPage() {
                   />
                   <span className="text-xs font-medium text-slate-700 group-hover:text-slate-900">
                     Fresher / No Internship Yet
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            {/* 4. GRADUATION YEAR */}
-            <div className="space-y-2.5">
-              <label className="block text-xs font-bold text-slate-900 uppercase tracking-wider">
-                Graduation Year
-              </label>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2.5 cursor-pointer group select-none">
-                  <input
-                    type="checkbox"
-                    checked={batch2026}
-                    onChange={(e) => handleToggleBatch2026(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer"
-                  />
-                  <span className="text-xs font-medium text-slate-700 group-hover:text-slate-900">
-                    Batch of 2026
-                  </span>
-                </label>
-
-                <label className="flex items-center gap-2.5 cursor-pointer group select-none">
-                  <input
-                    type="checkbox"
-                    checked={batch2027}
-                    onChange={(e) => handleToggleBatch2027(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer"
-                  />
-                  <span className="text-xs font-medium text-slate-700 group-hover:text-slate-900">
-                    Batch of 2027
                   </span>
                 </label>
               </div>
@@ -1235,7 +1154,7 @@ export function ExploreStudentsPage() {
         </form>
       </Dialog>
 
-      <Footer />
+      {!location.pathname.startsWith('/company') && <Footer />}
     </div>
   );
 }

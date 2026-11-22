@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { ITeam, IProject } from '../../types';
 import { Navbar } from '../../components/layout/Navbar';
@@ -25,10 +25,14 @@ import {
   Layers,
   Sparkles,
   X,
+  ChevronDown,
+  Clock,
+  AlertCircle,
 } from 'lucide-react';
 
 export function ExploreTeamsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const { user } = useAuthStore();
 
   const [teams, setTeams] = useState<ITeam[]>([]);
@@ -42,6 +46,7 @@ export function ExploreTeamsPage() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [targetTeamForInvite, setTargetTeamForInvite] = useState<ITeam | null>(null);
   const [companyProjects, setCompanyProjects] = useState<IProject[]>([]);
+  const [sentInvitations, setSentInvitations] = useState<any[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [inviteMessage, setInviteMessage] = useState('');
   const [inviting, setInviting] = useState(false);
@@ -54,16 +59,39 @@ export function ExploreTeamsPage() {
 
   const [searchInput, setSearchInput] = useState(search);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [skillQuery, setSkillQuery] = useState(skill);
+  const [skillDropdownOpen, setSkillDropdownOpen] = useState(false);
 
-  const skillsList = [
-    'Kubernetes',
-    'PyTorch',
+  useEffect(() => {
+    setSkillQuery(skill);
+  }, [skill]);
+
+  const domainAndSkillOptions = [
+    'Full Stack Development',
+    'Frontend Development',
+    'Backend Development',
+    'DevOps & Cloud Architecture',
+    'Software Development',
+    'Artificial Intelligence & ML',
+    'Data Science & Analytics',
+    'Mobile App Development',
+    'Cyber Security',
+    'Blockchain & Web3',
+    'IoT & Embedded Systems',
+    'Cloud Infrastructure',
+    'UI/UX Design',
     'React',
     'Node.js',
+    'Python',
     'Go',
-    'Three.js',
-    'Flutter',
     'Docker',
+    'Kubernetes',
+    'TypeScript',
+    'PostgreSQL',
+    'MongoDB',
+    'Next.js',
+    'Flutter',
+    'PyTorch',
     'Kafka',
   ];
 
@@ -106,10 +134,17 @@ export function ExploreTeamsPage() {
 
     setTargetTeamForInvite(team);
     try {
-      const res = await api.get('/projects/company/my');
-      if (res.data.success && res.data.data.length > 0) {
-        setCompanyProjects(res.data.data);
-        setSelectedProjectId(res.data.data[0]._id);
+      const [projRes, invRes] = await Promise.all([
+        api.get('/projects/company/my'),
+        api.get('/invitations/company').catch(() => ({ data: { success: false, data: [] } })),
+      ]);
+
+      if (projRes.data.success && projRes.data.data.length > 0) {
+        setCompanyProjects(projRes.data.data);
+        setSelectedProjectId(projRes.data.data[0]._id);
+        if (invRes.data?.success) {
+          setSentInvitations(invRes.data.data || []);
+        }
         setInviteModalOpen(true);
       } else {
         toast.error('You need at least one published project before inviting teams');
@@ -134,6 +169,11 @@ export function ExploreTeamsPage() {
 
       if (res.data.success) {
         toast.success(`Project invitation dispatched to ${targetTeamForInvite.name}!`);
+        // Refresh sent invitations list
+        try {
+          const invRes = await api.get('/invitations/company');
+          if (invRes.data?.success) setSentInvitations(invRes.data.data || []);
+        } catch {}
         setInviteModalOpen(false);
         setInviteMessage('');
       }
@@ -170,7 +210,7 @@ export function ExploreTeamsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <Navbar />
+      {!location.pathname.startsWith('/company') && <Navbar />}
 
       {/* Header Banner */}
       <div className="bg-white border-b border-slate-200/80 py-8">
@@ -253,26 +293,109 @@ export function ExploreTeamsPage() {
               )}
             </div>
 
-            {/* Combined Skills */}
-            <div>
+            {/* Domain & Combined Skills - Input with Integrated Dropdown */}
+            <div className="relative">
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-                Combined Team Skill
+                Primary Domain / Skill
               </label>
-              <div className="flex flex-wrap gap-1.5">
-                {skillsList.map((s) => (
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Select domain or skill..."
+                  value={skillQuery}
+                  onFocus={() => setSkillDropdownOpen(true)}
+                  onChange={(e) => {
+                    setSkillQuery(e.target.value);
+                    setSkillDropdownOpen(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      updateParam('skill', skillQuery);
+                      setSkillDropdownOpen(false);
+                    }
+                  }}
+                  className="w-full pl-3 pr-8 py-2 text-xs rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                />
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  {skill && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateParam('skill', '');
+                        setSkillQuery('');
+                      }}
+                      className="text-slate-400 hover:text-slate-600 p-0.5 rounded"
+                      title="Clear domain/skill"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                   <button
-                    key={s}
-                    onClick={() => updateParam('skill', skill === s ? '' : s)}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
-                      skill === s
-                        ? 'bg-emerald-600 text-white border-emerald-600 font-bold'
-                        : 'border-slate-200 text-slate-700 hover:bg-slate-50'
-                    }`}
+                    type="button"
+                    onClick={() => setSkillDropdownOpen((prev) => !prev)}
+                    className="text-slate-400 hover:text-slate-600 p-0.5"
                   >
-                    {s}
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${skillDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
-                ))}
+                </div>
               </div>
+
+              {/* Dropdown Menu */}
+              {skillDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setSkillDropdownOpen(false)}
+                  />
+                  <div className="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-20 max-h-52 overflow-y-auto py-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateParam('skill', '');
+                        setSkillQuery('');
+                        setSkillDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-slate-50 flex items-center justify-between ${
+                        !skill ? 'text-emerald-700 font-bold bg-emerald-50/60' : 'text-slate-700'
+                      }`}
+                    >
+                      <span>All Domains & Skills</span>
+                      {!skill && <span className="text-[10px] text-emerald-600 font-bold">Active</span>}
+                    </button>
+                    {domainAndSkillOptions
+                      .filter((opt) => !skillQuery || opt.toLowerCase().includes(skillQuery.toLowerCase()))
+                      .map((opt) => (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => {
+                            updateParam('skill', opt);
+                            setSkillQuery(opt);
+                            setSkillDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-slate-50 flex items-center justify-between ${
+                            skill.toLowerCase() === opt.toLowerCase()
+                              ? 'text-emerald-700 font-bold bg-emerald-50/60'
+                              : 'text-slate-700'
+                          }`}
+                        >
+                          <span>{opt}</span>
+                          {skill.toLowerCase() === opt.toLowerCase() && (
+                            <span className="text-[10px] text-emerald-600 font-bold">Active</span>
+                          )}
+                        </button>
+                      ))}
+                    {domainAndSkillOptions.filter((opt) =>
+                      !skillQuery || opt.toLowerCase().includes(skillQuery.toLowerCase())
+                    ).length === 0 && (
+                      <div className="px-3 py-2 text-xs text-slate-400">
+                        Press Enter to filter by &quot;{skillQuery}&quot;
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Team Size */}
@@ -284,6 +407,7 @@ export function ExploreTeamsPage() {
                 {['all', '2', '3', '4'].map((size) => (
                   <button
                     key={size}
+                    type="button"
                     onClick={() => updateParam('teamSize', size)}
                     className={`py-1.5 rounded-md text-xs font-medium border transition-colors ${
                       teamSize === size
@@ -294,6 +418,37 @@ export function ExploreTeamsPage() {
                     {size === 'all' ? 'All' : `${size}p`}
                   </button>
                 ))}
+              </div>
+
+              {/* Exact Team Size Input */}
+              <div className="mt-3 pt-2.5 border-t border-slate-100">
+                <label className="block text-[11px] font-medium text-slate-500 mb-1.5">
+                  Exact Team Size
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <div className="relative flex-1">
+                    <Users className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                    <input
+                      type="number"
+                      min="1"
+                      max="25"
+                      placeholder="e.g. 5"
+                      value={teamSize !== 'all' ? teamSize : ''}
+                      onChange={(e) => updateParam('teamSize', e.target.value)}
+                      className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                    />
+                  </div>
+                  {teamSize !== 'all' && (
+                    <button
+                      type="button"
+                      onClick={() => updateParam('teamSize', 'all')}
+                      className="text-xs text-slate-400 hover:text-slate-600 p-1.5 rounded hover:bg-slate-100"
+                      title="Clear team size"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -347,6 +502,14 @@ export function ExploreTeamsPage() {
                             </span>
                           </div>
                         </div>
+
+                        {team.primaryDomain && (
+                          <div className="mb-2.5">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200/70">
+                              <Sparkles className="h-3 w-3 text-emerald-600" /> {team.primaryDomain}
+                            </span>
+                          </div>
+                        )}
 
                         <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-4">
                           {team.description}
@@ -496,49 +659,109 @@ export function ExploreTeamsPage() {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSendInvite} className="space-y-4 text-left">
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Select Company Project *
-            </label>
-            <select
-              value={selectedProjectId}
-              onChange={(e) => setSelectedProjectId(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            >
-              {companyProjects.map((p) => (
-                <option key={p._id} value={p._id}>
-                  {p.title} ({p.preferredTeamSize} Devs • {p.workMode})
-                </option>
-              ))}
-            </select>
-          </div>
+        {(() => {
+          const activeInviteForTeam = sentInvitations.find(
+            (inv) =>
+              inv.projectId === selectedProjectId &&
+              inv.teamId === targetTeamForInvite?._id
+          );
+          const isAlreadyAccepted = activeInviteForTeam?.status === 'accepted';
+          const isAlreadyPending = activeInviteForTeam?.status === 'pending';
+          const isPreviouslyRejected = activeInviteForTeam?.status === 'rejected';
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Invitation Note / Deliverable Context
-            </label>
-            <textarea
-              value={inviteMessage}
-              onChange={(e) => setInviteMessage(e.target.value)}
-              placeholder="We reviewed your team's combined skills and would like you to build this project..."
-              className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              rows={3}
-            />
-          </div>
+          return (
+            <form onSubmit={handleSendInvite} className="space-y-4 text-left">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Select Company Project *
+                </label>
+                <select
+                  value={selectedProjectId}
+                  onChange={(e) => setSelectedProjectId(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  {companyProjects.map((p) => {
+                    const inv = sentInvitations.find(
+                      (i) => i.projectId === p._id && i.teamId === targetTeamForInvite?._id
+                    );
+                    let labelSuffix = '';
+                    if (inv?.status === 'accepted') labelSuffix = ' [Already Accepted]';
+                    else if (inv?.status === 'pending') labelSuffix = ' [Invitation Pending]';
+                    else if (inv?.status === 'rejected') labelSuffix = ' [Declined - Can Re-invite]';
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setInviteModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="emerald" isLoading={inviting}>
-              Send Team Invitation
-            </Button>
-          </DialogFooter>
-        </form>
+                    return (
+                      <option key={p._id} value={p._id}>
+                        {p.title} ({p.preferredTeamSize} Devs • {p.workMode}){labelSuffix}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {isAlreadyAccepted && (
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 flex items-center gap-2.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span>
+                    Team <strong>&quot;{targetTeamForInvite?.name}&quot;</strong> has already accepted the invitation for this project.
+                  </span>
+                </div>
+              )}
+
+              {isAlreadyPending && (
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center gap-2.5">
+                  <Clock className="h-4 w-4 text-amber-600 shrink-0" />
+                  <span>
+                    An active invitation for this project is currently pending for team <strong>&quot;{targetTeamForInvite?.name}&quot;</strong>. Duplicate invitations are prevented until a response is received.
+                  </span>
+                </div>
+              )}
+
+              {isPreviouslyRejected && (
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 flex items-center gap-2.5">
+                  <AlertCircle className="h-4 w-4 text-slate-500 shrink-0" />
+                  <span>
+                    The previous invitation was declined by the team. You can send a revised invitation proposal below.
+                  </span>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Invitation Note / Deliverable Context
+                </label>
+                <textarea
+                  value={inviteMessage}
+                  onChange={(e) => setInviteMessage(e.target.value)}
+                  placeholder="We reviewed your team's combined skills and would like you to build this project..."
+                  disabled={isAlreadyAccepted || isAlreadyPending}
+                  className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-50 disabled:opacity-60"
+                  rows={3}
+                />
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setInviteModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="emerald"
+                  isLoading={inviting}
+                  disabled={isAlreadyAccepted || isAlreadyPending}
+                >
+                  {isAlreadyAccepted
+                    ? 'Already Joined'
+                    : isAlreadyPending
+                    ? 'Invitation Already Pending'
+                    : 'Send Team Invitation'}
+                </Button>
+              </DialogFooter>
+            </form>
+          );
+        })()}
       </Dialog>
 
-      <Footer />
+      {!location.pathname.startsWith('/company') && <Footer />}
     </div>
   );
 }

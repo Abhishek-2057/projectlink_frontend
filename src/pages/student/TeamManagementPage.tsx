@@ -31,8 +31,12 @@ import {
   Award,
   FolderGit2,
   AlertCircle,
+  AlertTriangle,
   Loader2,
   MessageSquare,
+  MoreVertical,
+  Edit3,
+  Share2,
 } from 'lucide-react';
 
 export function TeamManagementPage() {
@@ -40,10 +44,30 @@ export function TeamManagementPage() {
   const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 3-dots Menu State
+  const [menuOpenTeamId, setMenuOpenTeamId] = useState<string | null>(null);
+
+  // Edit Team Modal State
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [teamToEdit, setTeamToEdit] = useState<any>(null);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editPrimaryDomain, setEditPrimaryDomain] = useState('');
+  const [editCollege, setEditCollege] = useState('');
+  const [editSkillsText, setEditSkillsText] = useState('');
+  const [editIsPublic, setEditIsPublic] = useState(true);
+  const [updatingTeam, setUpdatingTeam] = useState(false);
+
+  // Delete Team Modal State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [teamToDelete, setTeamToDelete] = useState<any>(null);
+  const [deletingTeam, setDeletingTeam] = useState(false);
+
   // Create Team Modal
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [teamName, setTeamName] = useState('');
   const [teamDescription, setTeamDescription] = useState('');
+  const [primaryDomain, setPrimaryDomain] = useState('');
   const [college, setCollege] = useState('');
   const [skillsText, setSkillsText] = useState('React, Node.js, TypeScript');
   const [creating, setCreating] = useState(false);
@@ -91,8 +115,8 @@ export function TeamManagementPage() {
 
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!teamName.trim() || !teamDescription.trim()) {
-      toast.error('Team name and description are required');
+    if (!teamName.trim() || !teamDescription.trim() || !primaryDomain.trim()) {
+      toast.error('Team name, description, and primary domain/goal are required');
       return;
     }
 
@@ -106,6 +130,7 @@ export function TeamManagementPage() {
       const res = await api.post('/teams', {
         name: teamName,
         description: teamDescription,
+        primaryDomain: primaryDomain.trim(),
         college: college || 'Engineering Institute',
         skills,
       });
@@ -115,6 +140,7 @@ export function TeamManagementPage() {
         setCreateModalOpen(false);
         setTeamName('');
         setTeamDescription('');
+        setPrimaryDomain('');
         fetchTeams();
       }
     } catch (err: any) {
@@ -124,12 +150,85 @@ export function TeamManagementPage() {
     }
   };
 
+  const handleOpenEdit = (team: any) => {
+    setTeamToEdit(team);
+    setEditName(team.name || '');
+    setEditDescription(team.description || '');
+    setEditPrimaryDomain(team.primaryDomain || '');
+    setEditCollege(team.college || '');
+    setEditSkillsText((team.skills || []).join(', '));
+    setEditIsPublic(team.isPublic !== undefined ? team.isPublic : true);
+    setMenuOpenTeamId(null);
+    setEditModalOpen(true);
+  };
+
+  const handleUpdateTeam = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!teamToEdit) return;
+    if (!editName.trim() || !editDescription.trim() || !editPrimaryDomain.trim()) {
+      toast.error('Team name, description, and primary domain/goal are required');
+      return;
+    }
+
+    setUpdatingTeam(true);
+    try {
+      const skills = editSkillsText
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const res = await api.put(`/teams/${teamToEdit._id}`, {
+        name: editName.trim(),
+        description: editDescription.trim(),
+        primaryDomain: editPrimaryDomain.trim(),
+        college: editCollege.trim() || 'Engineering Institute',
+        skills,
+        isPublic: editIsPublic,
+      });
+
+      if (res.data.success) {
+        toast.success(`Team "${editName}" updated successfully!`);
+        setEditModalOpen(false);
+        setTeamToEdit(null);
+        fetchTeams();
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Error updating team');
+    } finally {
+      setUpdatingTeam(false);
+    }
+  };
+
+  const handleOpenDelete = (team: any) => {
+    setTeamToDelete(team);
+    setMenuOpenTeamId(null);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!teamToDelete) return;
+    setDeletingTeam(true);
+    try {
+      const res = await api.delete(`/teams/${teamToDelete._id}`);
+      if (res.data.success) {
+        toast.success(res.data.message || `Team "${teamToDelete.name}" deleted successfully!`);
+        setDeleteModalOpen(false);
+        setTeamToDelete(null);
+        fetchTeams();
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Error deleting team');
+    } finally {
+      setDeletingTeam(false);
+    }
+  };
+
   const handleOpenInvite = (team: any) => {
     setActiveTeamForInvite(team);
     setStudentIdInput('');
     setLookedUpStudent(null);
     setLookupError('');
-    setInviteMessage(`Join ${team.name} for final-year project collaboration!`);
+    setInviteMessage(`Join ${team.name} for project collaboration!`);
     setInviteModalOpen(true);
   };
 
@@ -307,6 +406,11 @@ export function TeamManagementPage() {
                         ) : (
                           <Badge variant="secondary" className="text-[10px]">Member</Badge>
                         )}
+                        {team.primaryDomain && (
+                          <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-800 border-emerald-200 font-bold">
+                            {team.primaryDomain}
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-xs text-slate-500">
                         {team.college} • {team.membersCount || team.members?.length || 1} Members
@@ -354,6 +458,107 @@ export function TeamManagementPage() {
                         <LogOut className="mr-1.5 h-3.5 w-3.5" /> Leave Team
                       </Button>
                     )}
+
+                    {/* 3-Dots Action Menu */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setMenuOpenTeamId(menuOpenTeamId === team._id ? null : team._id)}
+                        className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none"
+                        title="More Team Options"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+
+                      {menuOpenTeamId === team._id && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-20"
+                            onClick={() => setMenuOpenTeamId(null)}
+                          />
+                          <div className="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-xl shadow-xl border border-slate-200/90 py-1.5 z-30 animate-in fade-in zoom-in-95 duration-100">
+                            {isLeader ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEdit(team)}
+                                  className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                                >
+                                  <Edit3 className="h-3.5 w-3.5 text-slate-500" />
+                                  <span>Edit Team Details</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setMenuOpenTeamId(null);
+                                    handleOpenInvite(team);
+                                  }}
+                                  className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                                >
+                                  <UserPlus className="h-3.5 w-3.5 text-emerald-600" />
+                                  <span>Invite Member</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setMenuOpenTeamId(null);
+                                    navigator.clipboard.writeText(`${window.location.origin}/teams?search=${encodeURIComponent(team.name)}`);
+                                    toast.success('Public team link copied to clipboard!');
+                                  }}
+                                  className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                                >
+                                  <Share2 className="h-3.5 w-3.5 text-slate-500" />
+                                  <span>Share Team Link</span>
+                                </button>
+
+                                <div className="my-1 border-t border-slate-100" />
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenDelete(team)}
+                                  className="w-full text-left px-3.5 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 text-rose-500" />
+                                  <span>Delete Team</span>
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setMenuOpenTeamId(null);
+                                    navigator.clipboard.writeText(`${window.location.origin}/teams?search=${encodeURIComponent(team.name)}`);
+                                    toast.success('Public team link copied to clipboard!');
+                                  }}
+                                  className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                                >
+                                  <Share2 className="h-3.5 w-3.5 text-slate-500" />
+                                  <span>Share Team Link</span>
+                                </button>
+
+                                <div className="my-1 border-t border-slate-100" />
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setMenuOpenTeamId(null);
+                                    setTeamToLeave(team);
+                                    setLeaveModalOpen(true);
+                                  }}
+                                  className="w-full text-left px-3.5 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                                >
+                                  <LogOut className="h-3.5 w-3.5 text-rose-500" />
+                                  <span>Leave Team</span>
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -519,6 +724,34 @@ export function TeamManagementPage() {
             required
           />
 
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              Team Goal / Primary Domain *
+            </label>
+            <Input
+              placeholder="e.g. Full Stack Development, DevOps, AI/ML, Cloud"
+              value={primaryDomain}
+              onChange={(e) => setPrimaryDomain(e.target.value)}
+              required
+            />
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {['Full Stack Development', 'Software Development', 'DevOps', 'Artificial Intelligence & ML', 'Mobile App Development', 'Cloud Infrastructure'].map((domain) => (
+                <button
+                  key={domain}
+                  type="button"
+                  onClick={() => setPrimaryDomain(domain)}
+                  className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-colors ${
+                    primaryDomain === domain
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  {domain}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <Textarea
             label="Team Mission & Project Interests"
             placeholder="Describe what kind of projects your team aims to build..."
@@ -550,6 +783,161 @@ export function TeamManagementPage() {
             </Button>
           </DialogFooter>
         </form>
+      </Dialog>
+
+      {/* Edit Team Modal */}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogHeader>
+          <div className="flex items-center gap-2.5 text-slate-900">
+            <div className="p-2 rounded-full bg-emerald-100 text-emerald-700">
+              <Edit3 className="h-5 w-5" />
+            </div>
+            <DialogTitle>Edit Team Details</DialogTitle>
+          </div>
+          <DialogDescription>
+            Update your team name, mission focus, primary domain, and technical stack.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleUpdateTeam} className="space-y-4 text-left">
+          <Input
+            label="Team Name"
+            placeholder="e.g. AlgoWarriors / CloudMatrix"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            required
+          />
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              Team Goal / Primary Domain *
+            </label>
+            <Input
+              placeholder="e.g. Full Stack Development, DevOps, AI/ML, Cloud"
+              value={editPrimaryDomain}
+              onChange={(e) => setEditPrimaryDomain(e.target.value)}
+              required
+            />
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {[
+                'Full Stack Development',
+                'Software Development',
+                'DevOps',
+                'Artificial Intelligence & ML',
+                'Mobile App Development',
+                'Cloud Infrastructure',
+              ].map((domain) => (
+                <button
+                  key={domain}
+                  type="button"
+                  onClick={() => setEditPrimaryDomain(domain)}
+                  className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-colors cursor-pointer ${
+                    editPrimaryDomain === domain
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  {domain}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <Textarea
+            label="Team Mission & Project Interests"
+            placeholder="Describe what kind of projects your team aims to build..."
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            rows={3}
+            required
+          />
+
+          <Input
+            label="College / Institute"
+            placeholder="e.g. IIT BHU / BITS Pilani"
+            value={editCollege}
+            onChange={(e) => setEditCollege(e.target.value)}
+          />
+
+          <Input
+            label="Combined Technical Stack (Comma-separated)"
+            value={editSkillsText}
+            onChange={(e) => setEditSkillsText(e.target.value)}
+          />
+
+          <div className="flex items-center gap-2 pt-1">
+            <input
+              type="checkbox"
+              id="editIsPublic"
+              checked={editIsPublic}
+              onChange={(e) => setEditIsPublic(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+            />
+            <label htmlFor="editIsPublic" className="text-xs font-medium text-slate-700 cursor-pointer">
+              List team publicly on the Explore Teams marketplace
+            </label>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setEditModalOpen(false);
+                setTeamToEdit(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="default"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+              isLoading={updatingTeam}
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </form>
+      </Dialog>
+
+      {/* Delete Team Confirmation Modal */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogHeader>
+          <div className="flex items-center gap-2.5 text-rose-600">
+            <div className="p-2 rounded-full bg-rose-100">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <DialogTitle>Delete Team</DialogTitle>
+          </div>
+          <DialogDescription className="pt-2 text-slate-600 leading-relaxed">
+            Are you sure you want to permanently delete <strong className="text-slate-900">&quot;{teamToDelete?.name}&quot;</strong>?
+            <br />
+            This action will dissolve the team, remove all memberships, cancel any pending invitations, and delete the team&apos;s chat room. This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setDeleteModalOpen(false);
+              setTeamToDelete(null);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="default"
+            onClick={handleConfirmDelete}
+            isLoading={deletingTeam}
+            className="bg-rose-600 hover:bg-rose-700 text-white font-bold"
+          >
+            Yes, Delete Team
+          </Button>
+        </DialogFooter>
       </Dialog>
 
       {/* Invite Member Modal - BY STUDENT ID */}
@@ -692,7 +1080,7 @@ export function TeamManagementPage() {
           {/* Invitation Message */}
           <Textarea
             label="Invitation Message"
-            placeholder="Join our team to collaborate on final-year industry projects..."
+            placeholder="Join our team to collaborate on industry projects..."
             value={inviteMessage}
             onChange={(e) => setInviteMessage(e.target.value)}
             rows={3}
